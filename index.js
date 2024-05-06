@@ -7,7 +7,7 @@ const saltRounds = 10;
 const app = express();
 app.use(bodyParser.json());
 
-const serviceAccount = JSON.parse(process.env.FIREBASE_ADMIN_CONFIG);
+const serviceAccount = require('./expresswithfirebase-57449-firebase-adminsdk-bej26-004f580b0a.json');
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
