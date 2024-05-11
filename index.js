@@ -86,7 +86,7 @@ app.post('/auth/login', async (req, res) => {
     }
 });
 
-//Mendaftarkan nasabah baru
+//Mendaftarkan nasabah baru ahay
 app.post('/customers', async (req, res) => {
     try {
       const { name, phoneNumber, address } = req.body;
