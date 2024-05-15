@@ -267,7 +267,7 @@ app.get('/transactions/deposit', async (req, res) => {
     snapshot.forEach(doc => {
       let transactionData = doc.data();
       // Hanya tambahkan transaksi yang memiliki jenis transaksi 'deposit'
-      if (transactionData.type === 'deposits') {
+      if (transactionData.type === 'deposit') {
         // Menambahkan ID transaksi ke dalam data transaksi
         transactionData.id = doc.id;
         depositTransactions.push(transactionData);
