@@ -257,7 +257,7 @@ app.get('/transactions/deposit', async (req, res) => {
   try {
     // Mengambil semua data transaksi menabung dari koleksi 'transactions'
     const transactionsRef = db.collection('transactions');
-    const snapshot = await transactionsRef.where('type', '==', 'deposit').get();
+    const snapshot = await transactionsRef.get();
 
     if (snapshot.empty) {
       return res.status(404).send("No deposit transactions found.");
@@ -267,7 +267,7 @@ app.get('/transactions/deposit', async (req, res) => {
     snapshot.forEach(doc => {
       let transactionData = doc.data();
       // Hanya tambahkan transaksi yang memiliki jenis transaksi 'deposit'
-      if (transactionData.type === 'deposit') {
+      if (transactionData.type === 'deposits') {
         // Menambahkan ID transaksi ke dalam data transaksi
         transactionData.id = doc.id;
         depositTransactions.push(transactionData);
