@@ -257,7 +257,7 @@ app.get('/transactions/deposit', async (req, res) => {
   try {
     // Mengambil semua data transaksi menabung dari koleksi 'transactions'
     const transactionsRef = db.collection('transactions');
-    const snapshot = await transactionsRef.get();
+    const snapshot = await transactionsRef.where('type', '==', 'deposit').get();
 
     if (snapshot.empty) {
       return res.status(404).send("No deposit transactions found.");
