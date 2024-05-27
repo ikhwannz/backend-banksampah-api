@@ -198,8 +198,8 @@ app.post('/transactions/deposit', async (req, res) => {
       let totalBalance = 0;
   
       // Iterasi melalui setiap entri deposit
-      for (const deposit of deposits) {
-        const { wasteTypeId, amount } = deposit;
+      for (const tabung of deposits) {
+        const { wasteTypeId, amount } = tabung;
   
         // Validasi input untuk setiap entri deposit
         if (!wasteTypeId || !amount || isNaN(amount) || amount <= 0) {
