@@ -617,6 +617,7 @@ app.post('/recommendations', async (req, res) => {
   }
 });
 
+// Mendapatkan Rekomendasi Pengolahan Berdasarkan Jenis Sampah
 app.get('/recommendations/:wasteType', async (req, res) => {
   try {
     const { wasteType } = req.params;
