@@ -263,7 +263,7 @@ app.post('/wastetypes', async (req, res) => {
 });
 
 // Mendapatkan data jenis sampah
-app.get('/waste-types', async (req, res) => {
+app.get('/wastetypes', async (req, res) => {
   try {
     // Mengambil semua data jenis sampah dari koleksi 'waste_types'
     const wasteTypesRef = db.collection('waste_types');
@@ -282,6 +282,61 @@ app.get('/waste-types', async (req, res) => {
     });
 
     res.status(200).send(wasteTypes);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});
+
+// Mengedit data jenis sampah
+app.put('/wastetypes/:id', async (req, res) => {
+  try {
+    const wasteTypeId = req.params.id;
+    const { name, pricePerKg } = req.body;
+
+    // Validasi input dasar
+    if (!name && !pricePerKg) {
+      return res.status(400).send("At least one field (name or pricePerKg) is required.");
+    }
+
+    // Ambil referensi dokumen jenis sampah berdasarkan ID
+    const wasteTypeRef = db.collection('waste_types').doc(wasteTypeId);
+    const wasteTypeDoc = await wasteTypeRef.get();
+
+    if (!wasteTypeDoc.exists) {
+      return res.status(404).send("Waste type not found.");
+    }
+
+    // Buat objek update dengan hanya field yang diberikan
+    let updateData = {};
+    if (name) updateData.name = name;
+    if (pricePerKg) updateData.pricePerKg = pricePerKg;
+
+    // Update data jenis sampah di Firestore
+    await wasteTypeRef.update(updateData);
+
+    res.status(200).send({ message: "Waste type updated successfully", wasteTypeId: wasteTypeId });
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});
+
+// Menghapus jenis sampah
+app.delete('/wastetypes/:id', async (req, res) => {
+  try {
+    const wasteTypeId = req.params.id;
+
+    // Ambil referensi dokumen jenis sampah berdasarkan ID
+    const wasteTypeRef = db.collection('waste_types').doc(wasteTypeId);
+    const wasteTypeDoc = await wasteTypeRef.get();
+
+    if (!wasteTypeDoc.exists) {
+      return res.status(404).send("Waste type not found.");
+    }
+
+    // Hapus dokumen jenis sampah dari Firestore
+    await wasteTypeRef.delete();
+
+    res.status(200).send({ message: "Waste type deleted successfully", wasteTypeId: wasteTypeId });
   } catch (error) {
     res.status(500).send(error.message);
   }
