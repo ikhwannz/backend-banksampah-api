@@ -136,39 +136,6 @@ app.put('/users/me', verifyToken, async (req, res) => {
   }
 });
 
-// Mengedit user profile
-app.put('/auth/:id', async (req, res) => {
-  try {
-    const userId = req.params.id;
-    const { email, username } = req.body;
-
-    // Validasi input dasar
-    if (!email && !username) {
-      return res.status(400).send("At least one field (email or username) is required.");
-    }
-
-    // Ambil referensi dokumen pengguna berdasarkan ID
-    const userRef = db.collection('users').doc(userId);
-    const userDoc = await userRef.get();
-
-    if (!userDoc.exists) {
-      return res.status(404).send("User not found.");
-    }
-
-    // Buat objek update dengan hanya field yang diberikan
-    let updateData = {};
-    if (email) updateData.email = email;
-    if (username) updateData.username = username;
-
-    // Update data pengguna di Firestore
-    await userRef.update(updateData);
-
-    res.status(200).send({ message: "User data updated successfully", userId: userId });
-  } catch (error) {
-    res.status(500).send(error.message);
-  }
-});
-
 //Mendaftarkan nasabah baru ahay
 app.post('/customers', async (req, res) => {
     try {
