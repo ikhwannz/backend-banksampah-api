@@ -139,6 +139,7 @@ app.get('/customers', async (req, res) => {
     }
 });
 
+// Mendapatkan detail data nasabah
 app.get('/customers/:id', async (req, res) => {
   try {
     const customerId = req.params.id;
@@ -180,6 +181,39 @@ app.get('/customers/names', async (req, res) => {
     } catch (error) {
       res.status(500).send(error.message);
     }
+});
+
+app.put('/customers/:id', async (req, res) => {
+  try {
+    const customerId = req.params.id;
+    const { name, phoneNumber, address } = req.body;
+
+    // Validasi input dasar
+    if (!name && !phoneNumber && !address) {
+      return res.status(400).send("At least one field (name, phoneNumber, or address) is required.");
+    }
+
+    // Ambil referensi dokumen nasabah berdasarkan ID
+    const customerRef = db.collection('customers').doc(customerId);
+    const customerDoc = await customerRef.get();
+
+    if (!customerDoc.exists) {
+      return res.status(404).send("Customer not found.");
+    }
+
+    // Buat objek update dengan hanya field yang diberikan
+    let updateData = {};
+    if (name) updateData.name = name;
+    if (phoneNumber) updateData.phoneNumber = phoneNumber;
+    if (address) updateData.address = address;
+
+    // Update data nasabah di Firestore
+    await customerRef.update(updateData);
+
+    res.status(200).send({ message: "Customer data updated successfully", customerId: customerId });
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
 });
 
 //Menambahkan jenis sampah
