@@ -170,6 +170,44 @@ app.put('/users/me', verifyToken, async (req, res) => {
   }
 });
 
+// Mengubah password user
+app.put('/users/me/password', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).send("Current password and new password must be provided.");
+    }
+
+    // Dapatkan data user
+    const userRef = db.collection('users').doc(userId);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+      return res.status(404).send("User not found.");
+    }
+
+    const storedPassword = userDoc.data().password;
+
+    // Verifikasi current password
+    const passwordMatch = await bcrypt.compare(currentPassword, storedPassword);
+    if (!passwordMatch) {
+      return res.status(401).send("Current password is incorrect.");
+    }
+
+    // Hash new password
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password di database
+    await userRef.update({ password: hashedNewPassword });
+
+    res.status(200).send({ message: "Password updated successfully" });
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});
+
 //Mendaftarkan nasabah baru ahay
 app.post('/customers', async (req, res) => {
     try {
