@@ -183,6 +183,7 @@ app.get('/customers/names', async (req, res) => {
     }
 });
 
+// Mengedit data nasabah
 app.put('/customers/:id', async (req, res) => {
   try {
     const customerId = req.params.id;
@@ -211,6 +212,28 @@ app.put('/customers/:id', async (req, res) => {
     await customerRef.update(updateData);
 
     res.status(200).send({ message: "Customer data updated successfully", customerId: customerId });
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});
+
+// Menghapus data nasabah
+app.delete('/customers/:id', async (req, res) => {
+  try {
+    const customerId = req.params.id;
+
+    // Ambil referensi dokumen nasabah berdasarkan ID
+    const customerRef = db.collection('customers').doc(customerId);
+    const customerDoc = await customerRef.get();
+
+    if (!customerDoc.exists) {
+      return res.status(404).send("Customer not found.");
+    }
+
+    // Hapus dokumen nasabah dari Firestore
+    await customerRef.delete();
+
+    res.status(200).send({ message: "Customer deleted successfully", customerId: customerId });
   } catch (error) {
     res.status(500).send(error.message);
   }
@@ -308,32 +331,30 @@ app.post('/transactions/deposit', async (req, res) => {
 });
   
 //Mendapatkan data tabung
-app.get('/transactions/deposit', async (req, res) => {
+app.get('/transactions', async (req, res) => {
   try {
-    // Mengambil semua data transaksi menabung dari koleksi 'transactions'
+    // Mengambil semua data transaksi dari koleksi 'transactions'
     const transactionsRef = db.collection('transactions');
     const snapshot = await transactionsRef.get();
 
     if (snapshot.empty) {
-      return res.status(404).send("No deposit transactions found.");
+      return res.status(404).send("No transactions found.");
     }
 
-    let depositTransactions = [];
+    let transactions = [];
     snapshot.forEach(doc => {
       let transactionData = doc.data();
-      // Hanya tambahkan transaksi yang memiliki jenis transaksi 'deposit'
-      if (transactionData.type === 'deposits') {
-        // Menambahkan ID transaksi ke dalam data transaksi
-        transactionData.id = doc.id;
-        depositTransactions.push(transactionData);
-      }
+      // Menambahkan ID transaksi ke dalam data transaksi
+      transactionData.id = doc.id;
+      transactions.push(transactionData);
     });
 
-    res.status(200).send(depositTransactions);
+    res.status(200).send(transactions);
   } catch (error) {
     res.status(500).send(error.message);
   }
 });
+
   
   
 const PORT = process.env.PORT || 3000;
