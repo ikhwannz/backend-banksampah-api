@@ -263,7 +263,7 @@ app.post('/wastetypes', async (req, res) => {
 });
 
 //Menabung sampah
-app.post('/transactions/deposit', async (req, res) => {
+app.post('/transactions', async (req, res) => {
     try {
       const { name, date, deposits } = req.body;
   
@@ -350,6 +350,28 @@ app.get('/transactions', async (req, res) => {
     });
 
     res.status(200).send(transactions);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});
+
+// Mendapatkan detail data dari riwayat tabung
+app.get('/transactions/:id', async (req, res) => {
+  try {
+    const transactionId = req.params.id;
+
+    // Ambil data transaksi berdasarkan ID
+    const transactionRef = db.collection('transactions').doc(transactionId);
+    const transactionDoc = await transactionRef.get();
+
+    if (!transactionDoc.exists) {
+      return res.status(404).send("Transaction not found.");
+    }
+
+    let transactionData = transactionDoc.data();
+    transactionData.id = transactionId; // Tambahkan ID transaksi ke dalam data transaksi
+
+    res.status(200).send(transactionData);
   } catch (error) {
     res.status(500).send(error.message);
   }
