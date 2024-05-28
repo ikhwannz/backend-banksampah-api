@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const admin = require('firebase-admin');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
+const jwt = require('jsonwebtoken');
 
 const app = express();
 app.use(bodyParser.json());
@@ -14,6 +15,21 @@ admin.initializeApp({
 });
 
 const db = admin.firestore();
+
+const verifyToken = (req, res, next) => {
+  const token = req.header('Authorization').replace('Bearer ', '');
+  if (!token) {
+    return res.status(401).send("Access denied. No token provided.");
+  }
+
+  try {
+    const decoded = jwt.verify(token, 'your_jwt_secret_key');
+    req.user = decoded;
+    next();
+  } catch (ex) {
+    res.status(400).send("Invalid token.");
+  }
+};
 
 // Define routes here
 //Registrasi Pengguna Baru
@@ -49,41 +65,108 @@ app.post('/auth/register', async (req, res) => {
 
 //Login pengguna
 app.post('/auth/login', async (req, res) => {
-    try {
-      const { username, password } = req.body;
-  
-      if (!username || !password) {
-        return res.status(400).send("Username and password must be provided.");
-      }
-  
-      // Cari user berdasarkan username
-      const usersRef = db.collection('users');
-      const snapshot = await usersRef.where('username', '==', username).get();
-      if (snapshot.empty) {
-        return res.status(401).send("Invalid credentials.");
-      }
-  
-      // Dapatkan data user
-      let userId = '';
-      let storedPassword = '';
-      snapshot.forEach(doc => {
-        userId = doc.id;
-        storedPassword = doc.data().password;
-      });
-  
-      // Verifikasi password
-      const passwordMatch = await bcrypt.compare(password, storedPassword);
-      if (!passwordMatch) {
-        return res.status(401).send("Invalid credentials.");
-      }
-  
-      // Jika login berhasil, kirimkan respons sukses
-      // Anda mungkin ingin mengimplementasikan pembuatan token JWT atau mekanisme sesi di sini
-      res.status(200).send({ message: "Login successful", userId: userId });
-  
-    } catch (error) {
-      res.status(500).send(error.message);
+  try {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).send("Username and password must be provided.");
     }
+
+    // Cari user berdasarkan username
+    const usersRef = db.collection('users');
+    const snapshot = await usersRef.where('username', '==', username).get();
+    if (snapshot.empty) {
+      return res.status(401).send("Invalid credentials.");
+    }
+
+    // Dapatkan data user
+    let userId = '';
+    let storedPassword = '';
+    snapshot.forEach(doc => {
+      userId = doc.id;
+      storedPassword = doc.data().password;
+    });
+
+    // Verifikasi password
+    const passwordMatch = await bcrypt.compare(password, storedPassword);
+    if (!passwordMatch) {
+      return res.status(401).send("Invalid credentials.");
+    }
+
+    // Generate JWT
+    const token = jwt.sign({ id: userId }, 'your_jwt_secret_key', { expiresIn: '1h' });
+
+    res.status(200).send({ message: "Login successful", token: token });
+
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});
+
+// Mengedit profil user
+app.put('/users/me', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id; // Ambil ID pengguna dari token JWT
+    const { email, username } = req.body;
+
+    // Validasi input dasar
+    if (!email && !username) {
+      return res.status(400).send("At least one field (email or username) is required.");
+    }
+
+    // Ambil referensi dokumen pengguna berdasarkan ID
+    const userRef = db.collection('users').doc(userId);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+      return res.status(404).send("User not found.");
+    }
+
+    // Buat objek update dengan hanya field yang diberikan
+    let updateData = {};
+    if (email) updateData.email = email;
+    if (username) updateData.username = username;
+
+    // Update data pengguna di Firestore
+    await userRef.update(updateData);
+
+    res.status(200).send({ message: "User data updated successfully", userId: userId });
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});
+
+// Mengedit user profile
+app.put('/auth/:id', async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { email, username } = req.body;
+
+    // Validasi input dasar
+    if (!email && !username) {
+      return res.status(400).send("At least one field (email or username) is required.");
+    }
+
+    // Ambil referensi dokumen pengguna berdasarkan ID
+    const userRef = db.collection('users').doc(userId);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+      return res.status(404).send("User not found.");
+    }
+
+    // Buat objek update dengan hanya field yang diberikan
+    let updateData = {};
+    if (email) updateData.email = email;
+    if (username) updateData.username = username;
+
+    // Update data pengguna di Firestore
+    await userRef.update(updateData);
+
+    res.status(200).send({ message: "User data updated successfully", userId: userId });
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
 });
 
 //Mendaftarkan nasabah baru ahay
