@@ -591,7 +591,28 @@ app.get('/transactions/:id', async (req, res) => {
   }
 });
 
-  
+// Endpoint untuk Menambahkan Rekomendasi Pengolahan
+app.post('/recommendations', async (req, res) => {
+  try {
+    const { wasteType, title, referenceType, referenceLink } = req.body;
+
+    if (!wasteType || !title || !referenceType || !referenceLink) {
+      return res.status(400).send("All fields (wasteType, title, referenceType, referenceLink) must be provided.");
+    }
+
+    const recommendationRef = db.collection('recommendations').doc(wasteType);
+
+    await recommendationRef.set({
+      title: title,
+      referenceType: referenceType,
+      referenceLink: referenceLink
+    });
+
+    res.status(200).send({ message: "Recommendation added successfully" });
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});
   
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
