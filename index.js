@@ -90,9 +90,11 @@ app.post('/auth/login', async (req, res) => {
     // Dapatkan data user
     let userId = '';
     let storedPassword = '';
+    let userEmail = '';
     snapshot.forEach(doc => {
       userId = doc.id;
       storedPassword = doc.data().password;
+      userEmail = doc.data().email;
     });
 
     // Verifikasi password
@@ -108,12 +110,12 @@ app.post('/auth/login', async (req, res) => {
     // Simpan refresh token ke database atau storage
     await db.collection('refresh_tokens').doc(userId).set({ refreshToken });
 
-    res.status(200).send({ 
-      message: "Login successful", 
+    res.status(200).send({
+      message: "Login successful",
       username: username,
       email: userEmail,
-      accessToken, 
-      refreshToken 
+      accessToken: accessToken,
+      refreshToken: refreshToken
     });
   } catch (error) {
     res.status(500).send(error.message);
