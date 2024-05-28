@@ -23,8 +23,8 @@ const verifyToken = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-    req.user = decoded;  // Simpan informasi user yang ter-decode ke dalam request object
+    const decoded = jwt.verify(token, 'your_jwt_secret_key');
+    req.user = decoded;
     next();
   } catch (ex) {
     res.status(400).send("Invalid token.");
@@ -94,7 +94,7 @@ app.post('/auth/login', async (req, res) => {
     }
 
     // Generate JWT
-    const token = jwt.sign({ id: userId }, process.env.JWT_SECRET_KEY, { expiresIn: '1h' });
+    const token = jwt.sign({ id: userId }, 'your_jwt_secret_key', { expiresIn: '1h' });
 
     res.status(200).send({ message: "Login successful", token: token });
 
