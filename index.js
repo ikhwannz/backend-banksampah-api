@@ -174,10 +174,14 @@ app.put('/users/me', verifyToken, async (req, res) => {
 app.put('/users/me/password', verifyToken, async (req, res) => {
   try {
     const userId = req.user.id;
-    const { currentPassword, newPassword } = req.body;
+    const { currentPassword, newPassword, confirmNewPassword } = req.body;
 
-    if (!currentPassword || !newPassword) {
-      return res.status(400).send("Current password and new password must be provided.");
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      return res.status(400).send("Current password, new password, and confirm new password must be provided.");
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      return res.status(400).send("New password and confirm new password do not match.");
     }
 
     // Dapatkan data user
