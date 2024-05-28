@@ -94,15 +94,14 @@ app.post('/auth/login', async (req, res) => {
     }
 
     // Generate JWT
-    const token = jwt.sign({ id: userId }, 'your_jwt_secret_key', { expiresIn: '1h' });
+    const token = jwt.sign({ id: userId }, process.env.JWT_SECRET_KEY, { expiresIn: '1h' });
 
     res.status(200).send({ message: "Login successful", token: token });
 
   } catch (error) {
     res.status(500).send(error.message);
   }
-});
-
+})
 // Mengedit profil user
 app.put('/users/me', verifyToken, async (req, res) => {
   try {
