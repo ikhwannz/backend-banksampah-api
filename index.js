@@ -592,10 +592,9 @@ app.get('/transactions/:id', async (req, res) => {
 });
 
 // Endpoint untuk Menambahkan Rekomendasi Pengolahan
-app.post('/recommendations/:wasteType', async (req, res) => {
+app.post('/recommendations', async (req, res) => {
   try {
-    const { wasteType } = req.params;
-    const { title, referenceType, referenceLink } = req.body;
+    const { wasteType, title, referenceType, referenceLink } = req.body;
 
     if (!wasteType || !title || !referenceType || !referenceLink) {
       return res.status(400).send("All fields (wasteType, title, referenceType, referenceLink) must be provided.");
@@ -604,6 +603,7 @@ app.post('/recommendations/:wasteType', async (req, res) => {
     const recommendationRef = db.collection(`jenis_${wasteType}`).doc();
 
     await recommendationRef.set({
+      wasteType: wasteType,
       title: title,
       referenceType: referenceType,
       referenceLink: referenceLink
