@@ -262,7 +262,32 @@ app.post('/wastetypes', async (req, res) => {
     }
 });
 
-//Menabung sampah
+// Mendapatkan data jenis sampah
+app.get('/waste-types', async (req, res) => {
+  try {
+    // Mengambil semua data jenis sampah dari koleksi 'waste_types'
+    const wasteTypesRef = db.collection('waste_types');
+    const snapshot = await wasteTypesRef.get();
+
+    if (snapshot.empty) {
+      return res.status(404).send("No waste types found.");
+    }
+
+    let wasteTypes = [];
+    snapshot.forEach(doc => {
+      let wasteTypeData = doc.data();
+      // Menambahkan ID jenis sampah ke dalam data jenis sampah
+      wasteTypeData.id = doc.id;
+      wasteTypes.push(wasteTypeData);
+    });
+
+    res.status(200).send(wasteTypes);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});
+
+// Menabung sampah
 app.post('/transactions', async (req, res) => {
     try {
       const { name, date, deposits } = req.body;
