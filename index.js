@@ -139,23 +139,24 @@ app.get('/customers', async (req, res) => {
     }
 });
 
-// Mendapatkan detail data nasabah berdasarkan ID
 app.get('/customers/:id', async (req, res) => {
   try {
-      const customerId = req.params.id;
-      const customerRef = db.collection('customers').doc(customerId);
-      const doc = await customerRef.get();
+    const customerId = req.params.id;
 
-      if (!doc.exists) {
-          return res.status(404).send("Customer not found.");
-      }
+    // Ambil data nasabah berdasarkan ID
+    const customerRef = db.collection('customers').doc(customerId);
+    const customerDoc = await customerRef.get();
 
-      let customerData = doc.data();
-      customerData.id = doc.id; // Menambahkan ID document ke data nasabah
+    if (!customerDoc.exists) {
+      return res.status(404).send("Customer not found.");
+    }
 
-      res.status(200).send(customerData);
+    let customerData = customerDoc.data();
+    customerData.id = customerId;
+
+    res.status(200).send(customerData);
   } catch (error) {
-      res.status(500).send(error.message);
+    res.status(500).send(error.message);
   }
 });
 
