@@ -16,6 +16,14 @@ admin.initializeApp({
 
 const db = admin.firestore();
 
+const generateAccessToken = (userId) => {
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET_KEY, { expiresIn: '1h' });
+};
+
+const generateRefreshToken = (userId) => {
+  return jwt.sign({ id: userId }, process.env.JWT_REFRESH_SECRET_KEY, { expiresIn: '7d' });
+};
+
 const verifyToken = (req, res, next) => {
   const token = req.header('Authorization').replace('Bearer ', '');
   if (!token) {
@@ -23,7 +31,7 @@ const verifyToken = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, 'your_jwt_secret_key');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
     req.user = decoded;
     next();
   } catch (ex) {
@@ -93,27 +101,56 @@ app.post('/auth/login', async (req, res) => {
       return res.status(401).send("Invalid credentials.");
     }
 
-    // Generate JWT
-    const token = jwt.sign({ id: userId }, process.env.JWT_SECRET_KEY, { expiresIn: '1h' });
+    // Generate JWT and Refresh Token
+    const accessToken = generateAccessToken(userId);
+    const refreshToken = generateRefreshToken(userId);
 
-    res.status(200).send({ message: "Login successful", token: token });
+    // Simpan refresh token ke database atau storage
+    await db.collection('refresh_tokens').doc(userId).set({ refreshToken });
 
+    res.status(200).send({ message: "Login successful", accessToken, refreshToken });
   } catch (error) {
     res.status(500).send(error.message);
   }
-})
+});
+
+// Endpoint untuk Memperbarui Token
+app.post('/auth/token', async (req, res) => {
+  const { token } = req.body;
+
+  if (!token) {
+    return res.status(401).send("Refresh token must be provided.");
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET_KEY);
+    const userId = decoded.id;
+
+    // Verifikasi apakah refresh token masih valid
+    const refreshTokenDoc = await db.collection('refresh_tokens').doc(userId).get();
+    if (!refreshTokenDoc.exists || refreshTokenDoc.data().refreshToken !== token) {
+      return res.status(403).send("Invalid refresh token.");
+    }
+
+    // Generate new access token
+    const newAccessToken = generateAccessToken(userId);
+
+    res.status(200).send({ accessToken: newAccessToken });
+  } catch (error) {
+    res.status(403).send("Invalid refresh token.");
+  }
+});
+
 // Mengedit profil user
 app.put('/users/me', verifyToken, async (req, res) => {
   try {
-    const userId = req.user.id; // Ambil ID pengguna dari token JWT
+    const userId = req.user.id;
     const { email, username } = req.body;
 
-    // Validasi input dasar
     if (!email && !username) {
       return res.status(400).send("At least one field (email or username) is required.");
     }
 
-    // Ambil referensi dokumen pengguna berdasarkan ID
     const userRef = db.collection('users').doc(userId);
     const userDoc = await userRef.get();
 
@@ -121,12 +158,10 @@ app.put('/users/me', verifyToken, async (req, res) => {
       return res.status(404).send("User not found.");
     }
 
-    // Buat objek update dengan hanya field yang diberikan
     let updateData = {};
     if (email) updateData.email = email;
     if (username) updateData.username = username;
 
-    // Update data pengguna di Firestore
     await userRef.update(updateData);
 
     res.status(200).send({ message: "User data updated successfully", userId: userId });
