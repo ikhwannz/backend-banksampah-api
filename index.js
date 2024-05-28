@@ -4,8 +4,10 @@ const admin = require('firebase-admin');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const jwt = require('jsonwebtoken');
+const cors = require('cors');
 
 const app = express();
+app.use(cors());
 app.use(bodyParser.json());
 
 const serviceAccount = JSON.parse(process.env.FIREBASE_ADMIN_CONFIG);
