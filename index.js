@@ -592,15 +592,16 @@ app.get('/transactions/:id', async (req, res) => {
 });
 
 // Endpoint untuk Menambahkan Rekomendasi Pengolahan
-app.post('/recommendations', async (req, res) => {
+app.post('/recommendations/:wasteType', async (req, res) => {
   try {
-    const { wasteType, title, referenceType, referenceLink } = req.body;
+    const { wasteType } = req.params;
+    const { title, referenceType, referenceLink } = req.body;
 
     if (!wasteType || !title || !referenceType || !referenceLink) {
       return res.status(400).send("All fields (wasteType, title, referenceType, referenceLink) must be provided.");
     }
 
-    const recommendationRef = db.collection('recommendations').doc(wasteType);
+    const recommendationRef = db.collection(`jenis_${wasteType}`).doc();
 
     await recommendationRef.set({
       title: title,
@@ -609,6 +610,26 @@ app.post('/recommendations', async (req, res) => {
     });
 
     res.status(200).send({ message: "Recommendation added successfully" });
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});
+
+app.get('/recommendations/:wasteType', async (req, res) => {
+  try {
+    const { wasteType } = req.params;
+    const recommendationsSnapshot = await db.collection(`jenis_${wasteType}`).get();
+
+    if (recommendationsSnapshot.empty) {
+      return res.status(404).send("No recommendations found.");
+    }
+
+    let recommendations = [];
+    recommendationsSnapshot.forEach(doc => {
+      recommendations.push(doc.data());
+    });
+
+    res.status(200).send(recommendations);
   } catch (error) {
     res.status(500).send(error.message);
   }
