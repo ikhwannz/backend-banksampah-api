@@ -299,24 +299,23 @@ app.get('/customers/:id', async (req, res) => {
 
 //Mendapatkan nama nasabah dari daftar nasabah
 app.get('/customers/names', async (req, res) => {
-    try {
-      const customersRef = db.collection('customers');
-      const snapshot = await customersRef.get();
-  
-      if (snapshot.empty) {
-        return res.status(404).send("No customers found.");
-      }
-  
-      let customerNames = [];
-      snapshot.forEach(doc => {
-        let customerData = doc.data();
-        customerNames.push(customerData.name); // Menambahkan hanya nama ke dalam array
-      });
-  
-      res.status(200).send(customerNames);
-    } catch (error) {
-      res.status(500).send(error.message);
+  try {
+    const customersRef = db.collection('customers');
+    const snapshot = await customersRef.get();
+
+    if (snapshot.empty) {
+      return res.status(404).send("No customers found.");
     }
+
+    let customerNames = [];
+    snapshot.forEach(doc => {
+      customerNames.push(doc.data().name);
+    });
+
+    res.status(200).send(customerNames);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
 });
 
 // Endpoint untuk Mencari Nasabah Berdasarkan Nama
