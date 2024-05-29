@@ -332,27 +332,30 @@ app.get('/customers/search', async (req, res) => {
     const snapshot = await customersRef.get();
 
     if (snapshot.empty) {
+      console.log("No documents found in the collection.");
       return res.status(404).send("No customers found.");
     }
 
-    const regex = new RegExp(name, 'i');
+    const regex = new RegExp(name.split(' ').join('|'), 'i');
     let customers = [];
     snapshot.forEach(doc => {
+      console.log("Checking document: ", doc.data());
       if (regex.test(doc.data().name)) {
         customers.push(doc.data());
       }
     });
 
     if (customers.length === 0) {
+      console.log("No matching customers found.");
       return res.status(404).send("No customers found with the provided name.");
     }
 
     res.status(200).send(customers);
   } catch (error) {
+    console.error("Error occurred: ", error.message);
     res.status(500).send(error.message);
   }
 });
-
 
 // Mengedit data nasabah
 app.put('/customers/:id', async (req, res) => {
