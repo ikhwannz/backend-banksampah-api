@@ -304,7 +304,7 @@ app.get('/customers/names', async (req, res) => {
     const snapshot = await customersRef.get();
 
     if (snapshot.empty) {
-      return res.status(404).send("No customers found.");
+      return res.status(404).send("tidak ada");
     }
 
     let customerNames = [];
