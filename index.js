@@ -329,16 +329,23 @@ app.get('/customers/search', async (req, res) => {
     }
 
     const customersRef = db.collection('customers');
-    const snapshot = await customersRef.where('name', '==', name).get();
+    const snapshot = await customersRef.get();
 
     if (snapshot.empty) {
-      return res.status(404).send("No customers found with the provided name.");
+      return res.status(404).send("No customers found.");
     }
 
+    const regex = new RegExp(name, 'i');
     let customers = [];
     snapshot.forEach(doc => {
-      customers.push(doc.data());
+      if (regex.test(doc.data().name)) {
+        customers.push(doc.data());
+      }
     });
+
+    if (customers.length === 0) {
+      return res.status(404).send("No customers found with the provided name.");
+    }
 
     res.status(200).send(customers);
   } catch (error) {
@@ -452,7 +459,7 @@ app.get('/wastetypes', async (req, res) => {
 });
 
 // Endpoint untuk Mencari Jenis Sampah Berdasarkan Nama
-app.get('/waste-types/search', async (req, res) => {
+app.get('/wastetypes/search', async (req, res) => {
   try {
     const { name } = req.query;
 
