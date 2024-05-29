@@ -49,12 +49,12 @@ app.post('/auth/register', async (req, res) => {
 
     // Validasi input dasar
     if (!email || !password || !confirmPassword || !username) {
-      return res.status(400).send("All fields (email, password, confirm password, and username) are required.");
+      return res.status(400).send("Semua data wajib diisi.");
     }
 
     // Cek apakah password dan confirmPassword cocok
     if (password !== confirmPassword) {
-      return res.status(400).send("Passwords do not match.");
+      return res.status(400).send("Kata sandi tidak cocok.");
     }
 
     // Enkripsi password sebelum menyimpan ke database
@@ -67,7 +67,7 @@ app.post('/auth/register', async (req, res) => {
       password: hashedPassword
     });
 
-    res.status(201).send(`User added with ID: ${newUserRef.id}`);
+    res.status(201).send(`Sukses menambahkan user dengan ID: ${newUserRef.id}`);
   } catch (error) {
     res.status(400).send(error.message);
   }
@@ -79,7 +79,7 @@ app.post('/auth/login', async (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
-      return res.status(400).send("Username and password must be provided.");
+      return res.status(400).send("Username dan password harus diisi.");
     }
 
     // Cari user berdasarkan username
@@ -158,7 +158,7 @@ app.put('/users/me', verifyToken, async (req, res) => {
     const { email, username } = req.body;
 
     if (!email && !username) {
-      return res.status(400).send("At least one field (email or username) is required.");
+      return res.status(400).send("Setidaknya edit satu data.");
     }
 
     const userRef = db.collection('users').doc(userId);
@@ -174,7 +174,7 @@ app.put('/users/me', verifyToken, async (req, res) => {
 
     await userRef.update(updateData);
 
-    res.status(200).send({ message: "User data updated successfully", userId: userId });
+    res.status(200).send({ message: "Berhasil edit data user", userId: userId });
   } catch (error) {
     res.status(500).send(error.message);
   }
@@ -187,11 +187,11 @@ app.put('/users/me/password', verifyToken, async (req, res) => {
     const { currentPassword, newPassword, confirmNewPassword } = req.body;
 
     if (!currentPassword || !newPassword || !confirmNewPassword) {
-      return res.status(400).send("Current password, new password, and confirm new password must be provided.");
+      return res.status(400).send("Semua data wajib diisi.");
     }
 
     if (newPassword !== confirmNewPassword) {
-      return res.status(400).send("New password and confirm new password do not match.");
+      return res.status(400).send("Password baru dan konfirmasi password baru tidak cocok.");
     }
 
     // Dapatkan data user
@@ -207,7 +207,7 @@ app.put('/users/me/password', verifyToken, async (req, res) => {
     // Verifikasi current password
     const passwordMatch = await bcrypt.compare(currentPassword, storedPassword);
     if (!passwordMatch) {
-      return res.status(401).send("Current password is incorrect.");
+      return res.status(401).send("Kata sandi saat ini salah.");
     }
 
     // Hash new password
@@ -216,20 +216,20 @@ app.put('/users/me/password', verifyToken, async (req, res) => {
     // Update password di database
     await userRef.update({ password: hashedNewPassword });
 
-    res.status(200).send({ message: "Password updated successfully" });
+    res.status(200).send({ message: "Berhasil mengubah password" });
   } catch (error) {
     res.status(500).send(error.message);
   }
 });
 
-//Mendaftarkan nasabah baru ahay
+//Mendaftarkan nasabah baru
 app.post('/customers', async (req, res) => {
     try {
       const { name, phoneNumber, address } = req.body;
   
       // Validasi input dasar
       if (!name || !phoneNumber || !address) {
-        return res.status(400).send("All fields (name, phoneNumber, and address) are required.");
+        return res.status(400).send("Semua data wajib diisi.");
       }
   
       // Verifikasi bahwa nomor telepon belum terdaftar (opsional)
@@ -245,7 +245,7 @@ app.post('/customers', async (req, res) => {
         address: address
       });
   
-      res.status(201).send({ message: "Customer registered successfully", customerId: newCustomerRef.id });
+      res.status(201).send({ message: "Berhasil mendaftarkan nasabah baru", customerId: newCustomerRef.id });
   
     } catch (error) {
       res.status(500).send(error.message);
@@ -319,6 +319,34 @@ app.get('/customers/names', async (req, res) => {
     }
 });
 
+// Endpoint untuk Mencari Nasabah Berdasarkan Nama
+app.get('/customers/search', async (req, res) => {
+  try {
+    const { name } = req.query;
+
+    if (!name) {
+      return res.status(400).send("Name query parameter must be provided.");
+    }
+
+    const customersRef = db.collection('customers');
+    const snapshot = await customersRef.where('name', '==', name).get();
+
+    if (snapshot.empty) {
+      return res.status(404).send("No customers found with the provided name.");
+    }
+
+    let customers = [];
+    snapshot.forEach(doc => {
+      customers.push(doc.data());
+    });
+
+    res.status(200).send(customers);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});
+
+
 // Mengedit data nasabah
 app.put('/customers/:id', async (req, res) => {
   try {
@@ -327,7 +355,7 @@ app.put('/customers/:id', async (req, res) => {
 
     // Validasi input dasar
     if (!name && !phoneNumber && !address) {
-      return res.status(400).send("At least one field (name, phoneNumber, or address) is required.");
+      return res.status(400).send("Setidaknya edit satu data. ");
     }
 
     // Ambil referensi dokumen nasabah berdasarkan ID
@@ -347,7 +375,7 @@ app.put('/customers/:id', async (req, res) => {
     // Update data nasabah di Firestore
     await customerRef.update(updateData);
 
-    res.status(200).send({ message: "Customer data updated successfully", customerId: customerId });
+    res.status(200).send({ message: "Berhasil mengedit data nasabah", customerId: customerId });
   } catch (error) {
     res.status(500).send(error.message);
   }
@@ -369,7 +397,7 @@ app.delete('/customers/:id', async (req, res) => {
     // Hapus dokumen nasabah dari Firestore
     await customerRef.delete();
 
-    res.status(200).send({ message: "Customer deleted successfully", customerId: customerId });
+    res.status(200).send({ message: "Berhasil menghapus data nasabah", customerId: customerId });
   } catch (error) {
     res.status(500).send(error.message);
   }
@@ -382,7 +410,7 @@ app.post('/wastetypes', async (req, res) => {
   
       // Validasi input dasar
       if (!name || !pricePerKg) {
-        return res.status(400).send("Both name and price per kg are required.");
+        return res.status(400).send("Semua data wajib diisi.");
       }
   
       // Simpan data jenis sampah ke database
@@ -391,7 +419,7 @@ app.post('/wastetypes', async (req, res) => {
         pricePerKg: pricePerKg
       });
   
-      res.status(201).send({ message: "Waste type added successfully", wasteTypeId: newWasteTypeRef.id });
+      res.status(201).send({ message: "Berhasil menambahkan jenis sampah", wasteTypeId: newWasteTypeRef.id });
   
     } catch (error) {
       res.status(500).send(error.message);
@@ -423,6 +451,33 @@ app.get('/wastetypes', async (req, res) => {
   }
 });
 
+// Endpoint untuk Mencari Jenis Sampah Berdasarkan Nama
+app.get('/waste-types/search', async (req, res) => {
+  try {
+    const { name } = req.query;
+
+    if (!name) {
+      return res.status(400).send("Name query parameter must be provided.");
+    }
+
+    const wasteTypesRef = db.collection('waste_types');
+    const snapshot = await wasteTypesRef.where('name', '==', name).get();
+
+    if (snapshot.empty) {
+      return res.status(404).send("No waste types found with the provided name.");
+    }
+
+    let wasteTypes = [];
+    snapshot.forEach(doc => {
+      wasteTypes.push(doc.data());
+    });
+
+    res.status(200).send(wasteTypes);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});
+
 // Mengedit data jenis sampah
 app.put('/wastetypes/:id', async (req, res) => {
   try {
@@ -431,7 +486,7 @@ app.put('/wastetypes/:id', async (req, res) => {
 
     // Validasi input dasar
     if (!name && !pricePerKg) {
-      return res.status(400).send("At least one field (name or pricePerKg) is required.");
+      return res.status(400).send("Setidaknya edit satu data.");
     }
 
     // Ambil referensi dokumen jenis sampah berdasarkan ID
@@ -450,7 +505,7 @@ app.put('/wastetypes/:id', async (req, res) => {
     // Update data jenis sampah di Firestore
     await wasteTypeRef.update(updateData);
 
-    res.status(200).send({ message: "Waste type updated successfully", wasteTypeId: wasteTypeId });
+    res.status(200).send({ message: "Berhasil mengedit jenis sampah", wasteTypeId: wasteTypeId });
   } catch (error) {
     res.status(500).send(error.message);
   }
@@ -472,7 +527,7 @@ app.delete('/wastetypes/:id', async (req, res) => {
     // Hapus dokumen jenis sampah dari Firestore
     await wasteTypeRef.delete();
 
-    res.status(200).send({ message: "Waste type deleted successfully", wasteTypeId: wasteTypeId });
+    res.status(200).send({ message: "Berhasil menghapus jenis data", wasteTypeId: wasteTypeId });
   } catch (error) {
     res.status(500).send(error.message);
   }
@@ -485,7 +540,7 @@ app.post('/transactions', async (req, res) => {
   
       // Validasi input dasar
       if (!name || !date || !deposits || !Array.isArray(deposits) || deposits.length === 0) {
-        return res.status(400).send("Name, date, and at least one deposit entry are required.");
+        return res.status(400).send("Semua data wajib diisi.");
       }
   
       // Membuat variabel untuk total saldo
@@ -539,7 +594,7 @@ app.post('/transactions', async (req, res) => {
         });
       }
   
-      res.status(201).send({ message: "Deposit transaction added successfully", transactionId: newTransactionRef.id });
+      res.status(201).send({ message: "Berhasil menabung sampah", transactionId: newTransactionRef.id });
   
     } catch (error) {
       res.status(500).send(error.message);
