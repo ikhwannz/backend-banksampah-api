@@ -319,7 +319,7 @@ app.get('/nasabah/names', async (req, res) => {
 });
 
 // Endpoint untuk Mencari Nasabah Berdasarkan Nama
-app.get('/customers/search', async (req, res) => {
+app.get('/nasabah/search', async (req, res) => {
   try {
     const { name } = req.query;
 
