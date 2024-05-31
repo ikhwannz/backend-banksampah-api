@@ -298,7 +298,7 @@ app.get('/customers/:id', async (req, res) => {
 });
 
 //Mendapatkan nama nasabah dari daftar nasabah
-app.get('/customers/names', async (req, res) => {
+app.get('/nasabah/names', async (req, res) => {
   try {
     const customersRef = db.collection('customers');
     const snapshot = await customersRef.get();
