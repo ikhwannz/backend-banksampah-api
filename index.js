@@ -86,7 +86,7 @@ app.post('/auth/login', async (req, res) => {
     const usersRef = db.collection('users');
     const snapshot = await usersRef.where('username', '==', username).get();
     if (snapshot.empty) {
-      return res.status(401).send("Invalid credentials.");
+      return res.status(401).send("Username tidak terdaftar.");
     }
 
     // Dapatkan data user
@@ -102,7 +102,7 @@ app.post('/auth/login', async (req, res) => {
     // Verifikasi password
     const passwordMatch = await bcrypt.compare(password, storedPassword);
     if (!passwordMatch) {
-      return res.status(401).send("Invalid credentials.");
+      return res.status(401).send("Password yang anda masukkan salah.");
     }
 
     // Generate JWT and Refresh Token
@@ -113,7 +113,7 @@ app.post('/auth/login', async (req, res) => {
     await db.collection('refresh_tokens').doc(userId).set({ refreshToken });
 
     res.status(200).send({
-      message: "Login successful",
+      message: "Berhasil login",
       username: username,
       email: userEmail,
       accessToken: accessToken,
@@ -165,7 +165,7 @@ app.put('/users/me', verifyToken, async (req, res) => {
     const userDoc = await userRef.get();
 
     if (!userDoc.exists) {
-      return res.status(404).send("User not found.");
+      return res.status(404).send("User tidak ditemukan.");
     }
 
     let updateData = {};
@@ -199,7 +199,7 @@ app.put('/users/me/password', verifyToken, async (req, res) => {
     const userDoc = await userRef.get();
 
     if (!userDoc.exists) {
-      return res.status(404).send("User not found.");
+      return res.status(404).send("User tidak ditemukan.");
     }
 
     const storedPassword = userDoc.data().password;
@@ -223,7 +223,7 @@ app.put('/users/me/password', verifyToken, async (req, res) => {
 });
 
 //Mendaftarkan nasabah baru
-app.post('/customers', async (req, res) => {
+app.post('/nasabah', async (req, res) => {
     try {
       const { name, phoneNumber, address } = req.body;
   
@@ -235,7 +235,7 @@ app.post('/customers', async (req, res) => {
       // Verifikasi bahwa nomor telepon belum terdaftar (opsional)
       const existingCustomer = await db.collection('customers').where('phoneNumber', '==', phoneNumber).get();
       if (!existingCustomer.empty) {
-        return res.status(400).send("A customer with this phone number already exists.");
+        return res.status(400).send("Nomor sudah dipakai oleh nasabah lain.");
       }
   
       // Simpan data nasabah ke database
@@ -253,13 +253,13 @@ app.post('/customers', async (req, res) => {
 });
 
 //Mendapatkan seluruh data nasabah
-app.get('/customers', async (req, res) => {
+app.get('/nasabah', async (req, res) => {
     try {
       const customersRef = db.collection('customers');
       const snapshot = await customersRef.get();
   
       if (snapshot.empty) {
-        return res.status(404).send("No customers found.");
+        return res.status(404).send("Tidak ada nasabah.");
       }
   
       let customers = [];
@@ -276,7 +276,7 @@ app.get('/customers', async (req, res) => {
 });
 
 // Mendapatkan detail data nasabah
-app.get('/customers/:id', async (req, res) => {
+app.get('/nasabah/:id', async (req, res) => {
   try {
     const customerId = req.params.id;
 
@@ -285,7 +285,7 @@ app.get('/customers/:id', async (req, res) => {
     const customerDoc = await customerRef.get();
 
     if (!customerDoc.exists) {
-      return res.status(404).send("Customer not found.");
+      return res.status(404).send("Nasabah tidak terdaftar.");
     }
 
     let customerData = customerDoc.data();
@@ -304,7 +304,7 @@ app.get('/nasabah/names', async (req, res) => {
     const snapshot = await customersRef.get();
 
     if (snapshot.empty) {
-      return res.status(404).send("tidak ada");
+      return res.status(404).send("Nasabah tidak terdaftar.");
     }
 
     let customerNames = [];
@@ -324,7 +324,7 @@ app.get('/nasabah/search', async (req, res) => {
     const { name } = req.query;
 
     if (!name) {
-      return res.status(400).send("Name query parameter must be provided.");
+      return res.status(400).send("Query paramater name harus diberikan.");
     }
 
     const customersRef = db.collection('customers');
@@ -346,7 +346,7 @@ app.get('/nasabah/search', async (req, res) => {
 
     if (customers.length === 0) {
       console.log("No matching customers found.");
-      return res.status(404).send("No customers found with the provided name.");
+      return res.status(404).send("Nasabah yang anda cari tidak ada.");
     }
 
     res.status(200).send(customers);
@@ -357,7 +357,7 @@ app.get('/nasabah/search', async (req, res) => {
 });
 
 // Mengedit data nasabah
-app.put('/customers/:id', async (req, res) => {
+app.put('/nasabah/:id', async (req, res) => {
   try {
     const customerId = req.params.id;
     const { name, phoneNumber, address } = req.body;
@@ -372,7 +372,7 @@ app.put('/customers/:id', async (req, res) => {
     const customerDoc = await customerRef.get();
 
     if (!customerDoc.exists) {
-      return res.status(404).send("Customer not found.");
+      return res.status(404).send("Nasabah tidak ditemukan.");
     }
 
     // Buat objek update dengan hanya field yang diberikan
@@ -391,7 +391,7 @@ app.put('/customers/:id', async (req, res) => {
 });
 
 // Menghapus data nasabah
-app.delete('/customers/:id', async (req, res) => {
+app.delete('/nasabah/:id', async (req, res) => {
   try {
     const customerId = req.params.id;
 
@@ -400,7 +400,7 @@ app.delete('/customers/:id', async (req, res) => {
     const customerDoc = await customerRef.get();
 
     if (!customerDoc.exists) {
-      return res.status(404).send("Customer not found.");
+      return res.status(404).send("Nasabah tidak terdaftar.");
     }
 
     // Hapus dokumen nasabah dari Firestore
@@ -443,7 +443,7 @@ app.get('/wastetypes', async (req, res) => {
     const snapshot = await wasteTypesRef.get();
 
     if (snapshot.empty) {
-      return res.status(404).send("No waste types found.");
+      return res.status(404).send("Tidak ada jenis sampah.");
     }
 
     let wasteTypes = [];
@@ -466,14 +466,14 @@ app.get('/wastetypes/search', async (req, res) => {
     const { name } = req.query;
 
     if (!name) {
-      return res.status(400).send("Name query parameter must be provided.");
+      return res.status(400).send("Query paramater name harus diberikan.");
     }
 
     const wasteTypesRef = db.collection('waste_types');
     const snapshot = await wasteTypesRef.where('name', '==', name).get();
 
     if (snapshot.empty) {
-      return res.status(404).send("No waste types found with the provided name.");
+      return res.status(404).send("Tidak ada jenis sampah yang anda cari.");
     }
 
     let wasteTypes = [];
@@ -503,7 +503,7 @@ app.put('/wastetypes/:id', async (req, res) => {
     const wasteTypeDoc = await wasteTypeRef.get();
 
     if (!wasteTypeDoc.exists) {
-      return res.status(404).send("Waste type not found.");
+      return res.status(404).send("Jenis sampah tidak ditemukan.");
     }
 
     // Buat objek update dengan hanya field yang diberikan
@@ -530,7 +530,7 @@ app.delete('/wastetypes/:id', async (req, res) => {
     const wasteTypeDoc = await wasteTypeRef.get();
 
     if (!wasteTypeDoc.exists) {
-      return res.status(404).send("Waste type not found.");
+      return res.status(404).send("Jenis sampah tidak ditemukan.");
     }
 
     // Hapus dokumen jenis sampah dari Firestore
@@ -543,7 +543,7 @@ app.delete('/wastetypes/:id', async (req, res) => {
 });
 
 // Menabung sampah
-app.post('/transactions', async (req, res) => {
+app.post('/tabung', async (req, res) => {
     try {
       const { name, date, deposits } = req.body;
   
@@ -561,13 +561,13 @@ app.post('/transactions', async (req, res) => {
   
         // Validasi input untuk setiap entri deposit
         if (!wasteTypeId || !amount || isNaN(amount) || amount <= 0) {
-          return res.status(400).send("Invalid deposit entry.");
+          return res.status(400).send("Setidaknya tabung 1 jenis sampah.");
         }
   
         // Dapatkan harga per kg dari jenis sampah yang sesuai
         const wasteTypeDoc = await db.collection('waste_types').doc(wasteTypeId).get();
         if (!wasteTypeDoc.exists) {
-          return res.status(404).send(`Waste type with ID ${wasteTypeId} not found.`);
+          return res.status(404).send(`Jenis sampah ${wasteTypeId} tidak ada.`);
         }
   
         const wasteTypeData = wasteTypeDoc.data();
@@ -618,7 +618,7 @@ app.get('/transactions', async (req, res) => {
     const snapshot = await transactionsRef.get();
 
     if (snapshot.empty) {
-      return res.status(404).send("No transactions found.");
+      return res.status(404).send("Tidak ada data tabung.");
     }
 
     let transactions = [];
@@ -645,7 +645,7 @@ app.get('/transactions/:id', async (req, res) => {
     const transactionDoc = await transactionRef.get();
 
     if (!transactionDoc.exists) {
-      return res.status(404).send("Transaction not found.");
+      return res.status(404).send("Tidak ada data tabung.");
     }
 
     let transactionData = transactionDoc.data();
@@ -663,7 +663,7 @@ app.post('/recommendations', async (req, res) => {
     const { wasteType, title, referenceType, referenceLink } = req.body;
 
     if (!wasteType || !title || !referenceType || !referenceLink) {
-      return res.status(400).send("All fields (wasteType, title, referenceType, referenceLink) must be provided.");
+      return res.status(400).send("Semua data wajib diisi.");
     }
 
     const recommendationRef = db.collection(`jenis_${wasteType}`).doc();
@@ -675,7 +675,7 @@ app.post('/recommendations', async (req, res) => {
       referenceLink: referenceLink
     });
 
-    res.status(200).send({ message: "Recommendation added successfully" });
+    res.status(200).send({ message: "Rekomendasi pengolahan berhasil ditambahkan" });
   } catch (error) {
     res.status(500).send(error.message);
   }
@@ -688,7 +688,7 @@ app.get('/recommendations/:wasteType', async (req, res) => {
     const recommendationsSnapshot = await db.collection(`jenis_${wasteType}`).get();
 
     if (recommendationsSnapshot.empty) {
-      return res.status(404).send("No recommendations found.");
+      return res.status(404).send("Tidak ditemukan rekomendasi.");
     }
 
     let recommendations = [];
