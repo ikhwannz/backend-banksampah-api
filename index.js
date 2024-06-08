@@ -627,7 +627,7 @@ app.post('/tabung', async (req, res) => {
 });
   
 //Mendapatkan data tabung
-app.get('/transactions', async (req, res) => {
+app.get('/tabung', async (req, res) => {
   try {
     // Mengambil semua data transaksi dari koleksi 'transactions'
     const transactionsRef = db.collection('transactions');
@@ -652,7 +652,7 @@ app.get('/transactions', async (req, res) => {
 });
 
 // Mendapatkan detail data dari riwayat tabung
-app.get('/transactions/:id', async (req, res) => {
+app.get('/tabung/:id', async (req, res) => {
   try {
     const transactionId = req.params.id;
 
