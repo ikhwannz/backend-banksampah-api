@@ -124,6 +124,22 @@ app.post('/auth/login', async (req, res) => {
   }
 });
 
+// Endpoint logout
+app.post('/auth/logout', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Hapus refresh token dari database atau storage
+    await db.collection('refresh_tokens').doc(userId).delete();
+
+    res.status(200).send({
+      message: "Berhasil logout"
+    });
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});
+
 // Endpoint untuk Memperbarui Token
 app.post('/auth/token', async (req, res) => {
   const { token } = req.body;
