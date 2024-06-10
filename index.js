@@ -19,7 +19,7 @@ admin.initializeApp({
 const db = admin.firestore();
 
 const generateAccessToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET_KEY, { expiresIn: '1h' });
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET_KEY, { expiresIn: '10m' });
 };
 
 const generateRefreshToken = (userId) => {
@@ -47,12 +47,12 @@ app.post('/auth/register', async (req, res) => {
   try {
     const { email, password, confirmPassword, username } = req.body;
 
-    // Validasi input dasar
+    // Validasi input
     if (!email || !password || !confirmPassword || !username) {
       return res.status(400).send("Semua data wajib diisi.");
     }
 
-    // Cek apakah password dan confirmPassword cocok
+    // Mengecek apakah password dan confirmPassword cocok
     if (password !== confirmPassword) {
       return res.status(400).send("Kata sandi tidak cocok.");
     }
