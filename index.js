@@ -625,7 +625,29 @@ app.post('/tabung', async (req, res) => {
       res.status(500).send(error.message);
     }
 });
-  
+
+app.get('/saldo', async (req, res) => {
+  try {
+    const saldoRef = db.collection('datasaving');
+    const snapshot = await saldoRef.get();
+
+    if (snapshot.empty) {
+      return res.status(404).send("Tidak ada saldo.");
+    }
+
+    let saldo = [];
+    snapshot.forEach(doc => {
+      let customerData = doc.data();
+      customerData.id = doc.id; // Menambahkan ID document ke data nasabah
+      saldo.push(customerData);
+    });
+
+    res.status(200).send(saldo);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});
+
 //Mendapatkan data tabung
 app.get('/tabung', async (req, res) => {
   try {
