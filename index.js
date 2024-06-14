@@ -19,7 +19,7 @@ admin.initializeApp({
 const db = admin.firestore();
 
 const generateAccessToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET_KEY, { expiresIn: '2m' });
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET_KEY, { expiresIn: '1h' });
 };
 
 const generateRefreshToken = (userId) => {
