@@ -560,71 +560,73 @@ app.delete('/wastetypes/:id', async (req, res) => {
 
 // Menabung sampah
 app.post('/tabung', async (req, res) => {
-    try {
+  try {
       const { name, date, deposits } = req.body;
-  
+
       // Validasi input dasar
       if (!name || !date || !deposits || !Array.isArray(deposits) || deposits.length === 0) {
-        return res.status(400).send("Semua data wajib diisi.");
+          return res.status(400).send("Semua data wajib diisi.");
       }
-  
+
       // Membuat variabel untuk total saldo
       let totalBalance = 0;
-  
+
       // Iterasi melalui setiap entri deposit
       for (const tabung of deposits) {
-        const { wasteTypeId, amount } = tabung;
-  
-        // Validasi input untuk setiap entri deposit
-        if (!wasteTypeId || !amount || isNaN(amount) || amount <= 0) {
-          return res.status(400).send("Setidaknya tabung 1 jenis sampah.");
-        }
-  
-        // Dapatkan harga per kg dari jenis sampah yang sesuai
-        const wasteTypeDoc = await db.collection('waste_types').doc(wasteTypeId).get();
-        if (!wasteTypeDoc.exists) {
-          return res.status(404).send(`Jenis sampah ${wasteTypeId} tidak ada.`);
-        }
-  
-        const wasteTypeData = wasteTypeDoc.data();
-        const pricePerKg = wasteTypeData.pricePerKg;
-  
-        // Hitung total saldo untuk jenis sampah ini dan tambahkan ke total saldo keseluruhan
-        totalBalance += pricePerKg * amount;
+          const { wasteTypeId, amount } = tabung;
+
+          // Validasi input untuk setiap entri deposit
+          if (!wasteTypeId || !amount || isNaN(amount) || amount <= 0) {
+              return res.status(400).send("Setidaknya tabung 1 jenis sampah dengan jumlah yang valid.");
+          }
+
+          // Dapatkan harga per 100 gram dari jenis sampah yang sesuai
+          const wasteTypeDoc = await db.collection('waste_types').doc(wasteTypeId).get();
+          if (!wasteTypeDoc.exists) {
+              return res.status(404).send(`Jenis sampah ${wasteTypeId} tidak ada.`);
+          }
+
+          const wasteTypeData = wasteTypeDoc.data();
+          const pricePer100Gram = wasteTypeData.pricePer100Gram;
+
+          // Konversi jumlah dari kg ke 100 gram dan hitung total saldo untuk jenis sampah ini
+          const amountInHundredGrams = (amount * 1000) / 100;
+          totalBalance += pricePer100Gram * amountInHundredGrams;
       }
-  
+
       // Simpan data transaksi ke koleksi 'transactions' di Firestore
       const newTransactionRef = await db.collection('transactions').add({
-        name: name,
-        date: date,
-        deposits: deposits,
-        totalBalance: totalBalance
+          name: name,
+          date: date,
+          deposits: deposits,
+          totalBalance: totalBalance
       });
-  
-      // Update atau tambahkan data nasabah ke koleksi 'customers' di Firestore
+
+      // Update atau tambahkan data nasabah ke koleksi 'datasaving' di Firestore
       const customerRef = db.collection('datasaving').doc(name);
       const customerDoc = await customerRef.get();
-  
+
       if (customerDoc.exists) {
-        // Jika nasabah sudah ada, update total saldo
-        const existingBalance = customerDoc.data().totalBalance || 0;
-        await customerRef.update({
-          totalBalance: existingBalance + totalBalance
-        });
+          // Jika nasabah sudah ada, update total saldo
+          const existingBalance = customerDoc.data().totalBalance || 0;
+          await customerRef.update({
+              totalBalance: existingBalance + totalBalance
+          });
       } else {
-        // Jika nasabah belum ada, tambahkan data nasabah baru
-        await customerRef.set({
-          name: name,
-          totalBalance: totalBalance
-        });
+          // Jika nasabah belum ada, tambahkan data nasabah baru
+          await customerRef.set({
+              name: name,
+              totalBalance: totalBalance
+          });
       }
-  
+
       res.status(201).send({ message: "Berhasil menabung sampah", transactionId: newTransactionRef.id });
-  
-    } catch (error) {
+
+  } catch (error) {
       res.status(500).send(error.message);
-    }
+  }
 });
+
 
 app.get('/saldo', async (req, res) => {
   try {
