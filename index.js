@@ -52,6 +52,12 @@ app.post('/auth/register', async (req, res) => {
       return res.status(400).send("Semua data wajib diisi.");
     }
 
+    // Validasi format email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).send("Format email tidak benar.");
+    }
+
     // Mengecek apakah password dan confirmPassword cocok
     if (password !== confirmPassword) {
       return res.status(400).send("Kata sandi tidak cocok.");
