@@ -587,7 +587,7 @@ app.post('/tabung', async (req, res) => {
           }
 
           const wasteTypeData = wasteTypeDoc.data();
-          const pricePer100Gram = wasteTypeData.pricePer100Gram;
+          const pricePer100Gram = wasteTypeData.pricePerKg;
 
           // Konversi jumlah dari kg ke 100 gram dan hitung total saldo untuk jenis sampah ini
           const amountInHundredGrams = (amount * 1000) / 100;
