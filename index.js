@@ -576,7 +576,7 @@ app.post('/tabung', async (req, res) => {
           const { wasteTypeId, amount } = tabung;
 
           // Validasi input untuk setiap entri deposit
-          if (!wasteTypeId || !amount || isNaN(amount) || amount <= 0) {
+          if (!wasteTypeId || amount == null || isNaN(amount) || amount <= 0) {
               return res.status(400).send("Setidaknya tabung 1 jenis sampah dengan jumlah yang valid.");
           }
 
@@ -626,6 +626,7 @@ app.post('/tabung', async (req, res) => {
       res.status(500).send(error.message);
   }
 });
+
 
 
 app.get('/saldo', async (req, res) => {
