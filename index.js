@@ -431,17 +431,17 @@ app.delete('/nasabah/:id', async (req, res) => {
 //Menambahkan jenis sampah
 app.post('/wastetypes', async (req, res) => {
     try {
-      const { name, pricePerKg } = req.body;
+      const { name, pricePerGram } = req.body;
   
       // Validasi input dasar
-      if (!name || !pricePerKg) {
+      if (!name || !pricePerGram) {
         return res.status(400).send("Semua data wajib diisi.");
       }
   
       // Simpan data jenis sampah ke database
       const newWasteTypeRef = await db.collection('waste_types').add({
         name: name,
-        pricePerKg: pricePerKg
+        pricePerGram: pricePerGram
       });
   
       res.status(201).send({ message: "Berhasil menambahkan jenis sampah", wasteTypeId: newWasteTypeRef.id });
