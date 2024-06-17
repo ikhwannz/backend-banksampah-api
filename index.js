@@ -593,11 +593,15 @@ app.post('/tabung', async (req, res) => {
           }
 
           const wasteTypeData = wasteTypeDoc.data();
-          const pricePer100Gram = wasteTypeData.pricePerGram;
+          const pricePerGram = wasteTypeData.pricePerGram;
 
-          // Konversi jumlah dari kg ke 100 gram dan hitung total saldo untuk jenis sampah ini
-          const amountInHundredGrams = (amount * 1000) / 100;
-          totalBalance += pricePer100Gram * amountInHundredGrams;
+          if (!pricePerGram || isNaN(pricePerGram)) {
+              return res.status(400).send(`Harga per gram untuk jenis sampah ${wasteTypeId} tidak valid.`);
+          }
+
+          // Konversi jumlah dari kg ke gram dan hitung total saldo untuk jenis sampah ini
+          const amountInGrams = amount * 1000;
+          totalBalance += pricePerGram * amountInGrams;
       }
 
       // Simpan data transaksi ke koleksi 'transactions' di Firestore
@@ -632,6 +636,7 @@ app.post('/tabung', async (req, res) => {
       res.status(500).send(error.message);
   }
 });
+
 
 
 
