@@ -386,7 +386,7 @@ app.put('/nasabah/:id', async (req, res) => {
 
     // Validasi input dasar
     if (!name && !phoneNumber && !address) {
-      return res.status(400).send("Setidaknya edit satu data. ");
+      return res.status(400).send("Setidaknya edit satu data.");
     }
 
     // Ambil referensi dokumen nasabah berdasarkan ID
@@ -406,11 +406,32 @@ app.put('/nasabah/:id', async (req, res) => {
     // Update data nasabah di Firestore
     await customerRef.update(updateData);
 
+    // Update nama dokumen di collection datasaving jika nama berubah
+    if (name) {
+      const oldName = customerDoc.data().name;
+      const datasavingRef = db.collection('datasaving').doc(oldName);
+      const datasavingDoc = await datasavingRef.get();
+
+      if (datasavingDoc.exists) {
+        const { totalBalance } = datasavingDoc.data();
+
+        // Buat dokumen baru dengan nama baru dan totalBalance yang sama
+        await db.collection('datasaving').doc(name).set({
+          name: name,
+          totalBalance: totalBalance
+        });
+
+        // Hapus dokumen lama
+        await datasavingRef.delete();
+      }
+    }
+
     res.status(200).send({ message: "Berhasil mengedit data nasabah", customerId: customerId });
   } catch (error) {
     res.status(500).send(error.message);
   }
 });
+
 
 // Menghapus data nasabah
 app.delete('/nasabah/:id', async (req, res) => {
