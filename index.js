@@ -461,7 +461,7 @@ app.delete('/nasabah/:id', async (req, res) => {
     await customerRef.delete();
 
     // Ambil referensi dokumen saldo nasabah berdasarkan ID nasabah
-    const saldoSnapshot = await db.collection('datasaving').where('customerId', '==', customerId).limit(1).get();
+    const saldoSnapshot = await db.collection('datasaving').where('customerId', '==', customerId).get();
 
     if (!saldoSnapshot.empty) {
       // Hapus dokumen saldo nasabah yang sesuai
