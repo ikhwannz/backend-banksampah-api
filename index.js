@@ -432,7 +432,6 @@ app.put('/nasabah/:id', async (req, res) => {
   }
 });
 
-
 // Menghapus data nasabah
 app.delete('/nasabah/:id', async (req, res) => {
   try {
@@ -720,51 +719,6 @@ app.get('/tabung/:id', async (req, res) => {
     transactionData.id = transactionId; // Tambahkan ID transaksi ke dalam data transaksi
 
     res.status(200).send(transactionData);
-  } catch (error) {
-    res.status(500).send(error.message);
-  }
-});
-
-// Endpoint untuk Menambahkan Rekomendasi Pengolahan
-app.post('/recommendations', async (req, res) => {
-  try {
-    const { wasteType, title, referenceType, referenceLink } = req.body;
-
-    if (!wasteType || !title || !referenceType || !referenceLink) {
-      return res.status(400).send("Semua data wajib diisi.");
-    }
-
-    const recommendationRef = db.collection(`jenis_${wasteType}`).doc();
-
-    await recommendationRef.set({
-      wasteType: wasteType,
-      title: title,
-      referenceType: referenceType,
-      referenceLink: referenceLink
-    });
-
-    res.status(200).send({ message: "Rekomendasi pengolahan berhasil ditambahkan" });
-  } catch (error) {
-    res.status(500).send(error.message);
-  }
-});
-
-// Mendapatkan Rekomendasi Pengolahan Berdasarkan Jenis Sampah
-app.get('/recommendations/:wasteType', async (req, res) => {
-  try {
-    const { wasteType } = req.params;
-    const recommendationsSnapshot = await db.collection(`jenis_${wasteType}`).get();
-
-    if (recommendationsSnapshot.empty) {
-      return res.status(404).send("Tidak ditemukan rekomendasi.");
-    }
-
-    let recommendations = [];
-    recommendationsSnapshot.forEach(doc => {
-      recommendations.push(doc.data());
-    });
-
-    res.status(200).send(recommendations);
   } catch (error) {
     res.status(500).send(error.message);
   }
