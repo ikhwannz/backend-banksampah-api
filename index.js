@@ -55,12 +55,24 @@ app.post('/auth/register', async (req, res) => {
     // Validasi format email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return res.status(400).send("Format email tidak benar.");
+      return res.status(400).send("Format email yang anda masukkan tidak benar.");
     }
 
     // Mengecek apakah password dan confirmPassword cocok
     if (password !== confirmPassword) {
-      return res.status(400).send("Kata sandi tidak cocok.");
+      return res.status(400).send("Kata sandi yang anda masukkan tidak cocok.");
+    }
+
+    // Mengecek apakah username sudah ada
+    const usernameSnapshot = await db.collection('users').where('username', '==', username).get();
+    if (!usernameSnapshot.empty) {
+      return res.status(400).send("Username sudah digunakan oleh pengguna lain.");
+    }
+
+    // Mengecek apakah email sudah ada
+    const emailSnapshot = await db.collection('users').where('email', '==', email).get();
+    if (!emailSnapshot.empty) {
+      return res.status(400).send("Email sudah digunakan oleh pengguna lain.");
     }
 
     // Enkripsi password sebelum menyimpan ke database
