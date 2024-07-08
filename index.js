@@ -460,7 +460,16 @@ app.delete('/nasabah/:id', async (req, res) => {
     // Hapus dokumen nasabah dari Firestore
     await customerRef.delete();
 
-    res.status(200).send({ message: "Berhasil menghapus data nasabah", customerId: customerId });
+    // Ambil referensi dokumen saldo nasabah berdasarkan ID nasabah
+    const saldoSnapshot = await db.collection('datasaving').where('customerId', '==', customerId).limit(1).get();
+
+    if (!saldoSnapshot.empty) {
+      // Hapus dokumen saldo nasabah yang sesuai
+      const saldoDocRef = saldoSnapshot.docs[0].ref;
+      await saldoDocRef.delete();
+    }
+
+    res.status(200).send({ message: "Berhasil menghapus data nasabah dan saldo yang sesuai", customerId: customerId });
   } catch (error) {
     res.status(500).send(error.message);
   }
