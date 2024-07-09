@@ -457,16 +457,19 @@ app.delete('/nasabah/:id', async (req, res) => {
       return res.status(404).send("Nasabah tidak terdaftar.");
     }
 
+    // Ambil nama nasabah untuk digunakan sebagai referensi ID saldo
+    const customerName = customerDoc.data().name;
+
     // Hapus dokumen nasabah dari Firestore
     await customerRef.delete();
 
-    // Ambil referensi dokumen saldo nasabah berdasarkan ID nasabah
-    const saldoSnapshot = await db.collection('datasaving').where('customerId', '==', customerId).get();
+    // Ambil referensi dokumen saldo nasabah berdasarkan nama nasabah
+    const saldoRef = db.collection('datasaving').doc(customerName);
+    const saldoDoc = await saldoRef.get();
 
-    if (!saldoSnapshot.empty) {
+    if (saldoDoc.exists) {
       // Hapus dokumen saldo nasabah yang sesuai
-      const saldoDocRef = saldoSnapshot.docs[0].ref;
-      await saldoDocRef.delete();
+      await saldoRef.delete();
     }
 
     res.status(200).send({ message: "Berhasil menghapus data nasabah dan saldo yang sesuai", customerId: customerId });
