@@ -151,7 +151,7 @@ app.post('/auth/logout', verifyToken, async (req, res) => {
     await db.collection('refresh_tokens').doc(userId).delete();
 
     res.status(200).send({
-      message: "Berhasil logout"
+      message: "Anda berhasil logout"
     });
   } catch (error) {
     res.status(500).send(error.message);
@@ -225,7 +225,7 @@ app.put('/users/me/password', verifyToken, async (req, res) => {
     }
 
     if (newPassword !== confirmNewPassword) {
-      return res.status(400).send("Password baru dan konfirmasi password baru tidak cocok.");
+      return res.status(400).send("Kata sandi baru yang anda masukkan tidak cocok.");
     }
 
     // Dapatkan data user
@@ -241,7 +241,7 @@ app.put('/users/me/password', verifyToken, async (req, res) => {
     // Verifikasi current password
     const passwordMatch = await bcrypt.compare(currentPassword, storedPassword);
     if (!passwordMatch) {
-      return res.status(401).send("Kata sandi saat ini salah.");
+      return res.status(401).send("Kata sandi lama yang anda masukkan salah.");
     }
 
     // Hash new password
@@ -250,7 +250,7 @@ app.put('/users/me/password', verifyToken, async (req, res) => {
     // Update password di database
     await userRef.update({ password: hashedNewPassword });
 
-    res.status(200).send({ message: "Berhasil mengubah password" });
+    res.status(200).send({ message: "Anda berhasil mengubah password" });
   } catch (error) {
     res.status(500).send(error.message);
   }
@@ -285,7 +285,7 @@ app.post('/nasabah', async (req, res) => {
       address: address
     });
 
-    res.status(201).send({ message: "Berhasil mendaftarkan nasabah baru", customerId: newCustomerRef.id });
+    res.status(201).send({ message: "Berhasil registrasi nasabah baru", customerId: newCustomerRef.id });
 
   } catch (error) {
     res.status(500).send(error.message);
@@ -299,7 +299,7 @@ app.get('/nasabah', async (req, res) => {
       const snapshot = await customersRef.get();
   
       if (snapshot.empty) {
-        return res.status(404).send("Tidak ada nasabah.");
+        return res.status(404).send("Tidak ditemukan data nasabah.");
       }
   
       let customers = [];
@@ -344,7 +344,7 @@ app.get('/nasabah/names', async (req, res) => {
     const snapshot = await customersRef.get();
 
     if (snapshot.empty) {
-      return res.status(404).send("Nasabah tidak terdaftar.");
+      return res.status(404).send("Tidak ditemukan data nasabah.");
     }
 
     let customerNames = [];
@@ -372,7 +372,7 @@ app.get('/nasabah/search', async (req, res) => {
 
     if (snapshot.empty) {
       console.log("No documents found in the collection.");
-      return res.status(404).send("No customers found.");
+      return res.status(404).send("Tidak ditemukan data nasabah.");
     }
 
     const regex = new RegExp(name.split(' ').join('|'), 'i');
@@ -404,7 +404,7 @@ app.put('/nasabah/:id', async (req, res) => {
 
     // Validasi input dasar
     if (!name && !phoneNumber && !address) {
-      return res.status(400).send("Setidaknya edit satu data.");
+      return res.status(400).send("Setidaknya edit satu data nasabah.");
     }
 
     // Ambil referensi dokumen nasabah berdasarkan ID
@@ -491,7 +491,7 @@ app.post('/wastetypes', async (req, res) => {
   
       // Validasi input dasar
       if (!name || !pricePerGram) {
-        return res.status(400).send("Semua data wajib diisi.");
+        return res.status(400).send("Semua data jenis sampah wajib diisi.");
       }
   
       // Simpan data jenis sampah ke database
@@ -608,7 +608,7 @@ app.delete('/wastetypes/:id', async (req, res) => {
     // Hapus dokumen jenis sampah dari Firestore
     await wasteTypeRef.delete();
 
-    res.status(200).send({ message: "Berhasil menghapus jenis data", wasteTypeId: wasteTypeId });
+    res.status(200).send({ message: "Berhasil menghapus jenis sampah", wasteTypeId: wasteTypeId });
   } catch (error) {
     res.status(500).send(error.message);
   }
@@ -633,7 +633,7 @@ app.post('/tabung', async (req, res) => {
 
           // Validasi input untuk setiap entri deposit
           if (!wasteTypeId || amount == null || isNaN(amount) || amount <= 0) {
-              return res.status(400).send("Setidaknya tabung 1 jenis sampah dengan jumlah yang valid.");
+              return res.status(400).send("Setidaknya masukkan 1 jenis sampah dengan jumlah yang valid.");
           }
 
           // Dapatkan harga per 100 gram dari jenis sampah yang sesuai
@@ -691,7 +691,7 @@ app.get('/saldo', async (req, res) => {
     const snapshot = await saldoRef.get();
 
     if (snapshot.empty) {
-      return res.status(404).send("Tidak ada saldo.");
+      return res.status(404).send("Tidak ditemukan data saldo nasabah.");
     }
 
     let saldo = [];
@@ -715,7 +715,7 @@ app.get('/tabung', async (req, res) => {
     const snapshot = await transactionsRef.get();
 
     if (snapshot.empty) {
-      return res.status(404).send("Tidak ada data tabung.");
+      return res.status(404).send("Tidak ditemukan data transaksi menabung.");
     }
 
     let transactions = [];
@@ -742,7 +742,7 @@ app.get('/tabung/:id', async (req, res) => {
     const transactionDoc = await transactionRef.get();
 
     if (!transactionDoc.exists) {
-      return res.status(404).send("Tidak ada data tabung.");
+      return res.status(404).send("Tidak ditemukan data transaksi ini.");
     }
 
     let transactionData = transactionDoc.data();
