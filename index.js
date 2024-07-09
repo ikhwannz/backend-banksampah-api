@@ -258,32 +258,38 @@ app.put('/users/me/password', verifyToken, async (req, res) => {
 
 //Mendaftarkan nasabah baru
 app.post('/nasabah', async (req, res) => {
-    try {
-      const { name, phoneNumber, address } = req.body;
-  
-      // Validasi input dasar
-      if (!name || !phoneNumber || !address) {
-        return res.status(400).send("Semua data wajib diisi.");
-      }
-  
-      // Verifikasi bahwa nomor telepon belum terdaftar (opsional)
-      const existingCustomer = await db.collection('customers').where('phoneNumber', '==', phoneNumber).get();
-      if (!existingCustomer.empty) {
-        return res.status(400).send("Nomor sudah dipakai oleh nasabah lain.");
-      }
-  
-      // Simpan data nasabah ke database
-      const newCustomerRef = await db.collection('customers').add({
-        name: name,
-        phoneNumber: phoneNumber,
-        address: address
-      });
-  
-      res.status(201).send({ message: "Berhasil mendaftarkan nasabah baru", customerId: newCustomerRef.id });
-  
-    } catch (error) {
-      res.status(500).send(error.message);
+  try {
+    const { name, phoneNumber, address } = req.body;
+
+    // Validasi input dasar
+    if (!name || !phoneNumber || !address) {
+      return res.status(400).send("Semua data wajib diisi.");
     }
+
+    // Verifikasi bahwa nomor telepon belum terdaftar (opsional)
+    const existingCustomerByPhone = await db.collection('customers').where('phoneNumber', '==', phoneNumber).get();
+    if (!existingCustomerByPhone.empty) {
+      return res.status(400).send("Nomor sudah dipakai oleh nasabah lain.");
+    }
+
+    // Verifikasi bahwa nama nasabah belum terdaftar
+    const existingCustomerByName = await db.collection('customers').where('name', '==', name).get();
+    if (!existingCustomerByName.empty) {
+      return res.status(400).send("Nama sudah dipakai oleh nasabah lain.");
+    }
+
+    // Simpan data nasabah ke database
+    const newCustomerRef = await db.collection('customers').add({
+      name: name,
+      phoneNumber: phoneNumber,
+      address: address
+    });
+
+    res.status(201).send({ message: "Berhasil mendaftarkan nasabah baru", customerId: newCustomerRef.id });
+
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
 });
 
 //Mendapatkan seluruh data nasabah
