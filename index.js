@@ -563,10 +563,10 @@ app.get('/wastetypes/search', async (req, res) => {
 app.put('/wastetypes/:id', async (req, res) => {
   try {
     const wasteTypeId = req.params.id;
-    const { name, pricePerKg } = req.body;
+    const { name, pricePer100Gram } = req.body;
 
     // Validasi input dasar
-    if (!name && !pricePerKg) {
+    if (!name && !pricePer100Gram) {
       return res.status(400).send("Setidaknya edit satu data.");
     }
 
@@ -581,7 +581,7 @@ app.put('/wastetypes/:id', async (req, res) => {
     // Buat objek update dengan hanya field yang diberikan
     let updateData = {};
     if (name) updateData.name = name;
-    if (pricePerKg) updateData.pricePerKg = pricePerKg;
+    if (pricePer100Gram) updateData.pricePer100Gram = pricePer100Gram;
 
     // Update data jenis sampah di Firestore
     await wasteTypeRef.update(updateData);
