@@ -64,13 +64,13 @@ app.post('/auth/register', async (req, res) => {
     }
 
     // Mengecek apakah username sudah ada
-    const usernameSnapshot = await db.collection('users').where('username', '==', username).get();
+    const usernameSnapshot = await db.collection('app_account').where('username', '==', username).get();
     if (!usernameSnapshot.empty) {
       return res.status(400).send("Username sudah digunakan oleh pengguna lain.");
     }
 
     // Mengecek apakah email sudah ada
-    const emailSnapshot = await db.collection('users').where('email', '==', email).get();
+    const emailSnapshot = await db.collection('app_account').where('email', '==', email).get();
     if (!emailSnapshot.empty) {
       return res.status(400).send("Email sudah digunakan oleh pengguna lain.");
     }
@@ -79,7 +79,7 @@ app.post('/auth/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     // Simpan user dengan password yang sudah dienkripsi
-    const newUserRef = await db.collection('users').add({
+    const newUserRef = await db.collection('app_account').add({
       email: email,
       username: username,
       password: hashedPassword
@@ -101,7 +101,7 @@ app.post('/auth/login', async (req, res) => {
     }
 
     // Cari user berdasarkan username
-    const usersRef = db.collection('users');
+    const usersRef = db.collection('app_account');
     const snapshot = await usersRef.where('username', '==', username).get();
     if (snapshot.empty) {
       return res.status(401).send("Username tidak terdaftar.");
@@ -195,7 +195,7 @@ app.put('/users/me', verifyToken, async (req, res) => {
       return res.status(400).send("Setidaknya edit satu data.");
     }
 
-    const userRef = db.collection('users').doc(userId);
+    const userRef = db.collection('app_account').doc(userId);
     const userDoc = await userRef.get();
 
     if (!userDoc.exists) {
@@ -229,7 +229,7 @@ app.put('/users/me/password', verifyToken, async (req, res) => {
     }
 
     // Dapatkan data user
-    const userRef = db.collection('users').doc(userId);
+    const userRef = db.collection('app_account').doc(userId);
     const userDoc = await userRef.get();
 
     if (!userDoc.exists) {
@@ -267,19 +267,19 @@ app.post('/nasabah', async (req, res) => {
     }
 
     // Verifikasi bahwa nomor telepon belum terdaftar (opsional)
-    const existingCustomerByPhone = await db.collection('customers').where('phoneNumber', '==', phoneNumber).get();
+    const existingCustomerByPhone = await db.collection('nasabah').where('phoneNumber', '==', phoneNumber).get();
     if (!existingCustomerByPhone.empty) {
       return res.status(400).send("Nomor sudah dipakai oleh nasabah lain.");
     }
 
     // Verifikasi bahwa nama nasabah belum terdaftar
-    const existingCustomerByName = await db.collection('customers').where('name', '==', name).get();
+    const existingCustomerByName = await db.collection('nasabah').where('name', '==', name).get();
     if (!existingCustomerByName.empty) {
       return res.status(400).send("Nama sudah dipakai oleh nasabah lain.");
     }
 
     // Simpan data nasabah ke database
-    const newCustomerRef = await db.collection('customers').add({
+    const newCustomerRef = await db.collection('nasabah').add({
       name: name,
       phoneNumber: phoneNumber,
       address: address
@@ -295,7 +295,7 @@ app.post('/nasabah', async (req, res) => {
 //Mendapatkan seluruh data nasabah
 app.get('/nasabah', async (req, res) => {
     try {
-      const customersRef = db.collection('customers');
+      const customersRef = db.collection('nasabah');
       const snapshot = await customersRef.get();
   
       if (snapshot.empty) {
@@ -321,7 +321,7 @@ app.get('/nasabah/:id', async (req, res) => {
     const customerId = req.params.id;
 
     // Ambil data nasabah berdasarkan ID
-    const customerRef = db.collection('customers').doc(customerId);
+    const customerRef = db.collection('nasabah').doc(customerId);
     const customerDoc = await customerRef.get();
 
     if (!customerDoc.exists) {
@@ -340,7 +340,7 @@ app.get('/nasabah/:id', async (req, res) => {
 //Mendapatkan nama nasabah dari daftar nasabah
 app.get('/nasabah/names', async (req, res) => {
   try {
-    const customersRef = db.collection('customers');
+    const customersRef = db.collection('nasabah');
     const snapshot = await customersRef.get();
 
     if (snapshot.empty) {
@@ -367,7 +367,7 @@ app.get('/nasabah/search', async (req, res) => {
       return res.status(400).send("Query paramater name harus diberikan.");
     }
 
-    const customersRef = db.collection('customers');
+    const customersRef = db.collection('nasabah');
     const snapshot = await customersRef.get();
 
     if (snapshot.empty) {
@@ -408,7 +408,7 @@ app.put('/nasabah/:id', async (req, res) => {
     }
 
     // Ambil referensi dokumen nasabah berdasarkan ID
-    const customerRef = db.collection('customers').doc(customerId);
+    const customerRef = db.collection('nasabah').doc(customerId);
     const customerDoc = await customerRef.get();
 
     if (!customerDoc.exists) {
@@ -427,14 +427,14 @@ app.put('/nasabah/:id', async (req, res) => {
     // Update nama dokumen di collection datasaving jika nama berubah
     if (name) {
       const oldName = customerDoc.data().name;
-      const datasavingRef = db.collection('datasaving').doc(oldName);
+      const datasavingRef = db.collection('saldo_nasabah').doc(oldName);
       const datasavingDoc = await datasavingRef.get();
 
       if (datasavingDoc.exists) {
         const { totalBalance } = datasavingDoc.data();
 
         // Buat dokumen baru dengan nama baru dan totalBalance yang sama
-        await db.collection('datasaving').doc(name).set({
+        await db.collection('saldo_nasabah').doc(name).set({
           name: name,
           totalBalance: totalBalance
         });
@@ -456,7 +456,7 @@ app.delete('/nasabah/:id', async (req, res) => {
     const customerId = req.params.id;
 
     // Ambil referensi dokumen nasabah berdasarkan ID
-    const customerRef = db.collection('customers').doc(customerId);
+    const customerRef = db.collection('nasabah').doc(customerId);
     const customerDoc = await customerRef.get();
 
     if (!customerDoc.exists) {
@@ -470,7 +470,7 @@ app.delete('/nasabah/:id', async (req, res) => {
     await customerRef.delete();
 
     // Ambil referensi dokumen saldo nasabah berdasarkan nama nasabah
-    const saldoRef = db.collection('datasaving').doc(customerName);
+    const saldoRef = db.collection('saldo_nasabah').doc(customerName);
     const saldoDoc = await saldoRef.get();
 
     if (saldoDoc.exists) {
@@ -487,17 +487,17 @@ app.delete('/nasabah/:id', async (req, res) => {
 //Menambahkan jenis sampah
 app.post('/wastetypes', async (req, res) => {
     try {
-      const { name, pricePerGram } = req.body;
+      const { name, pricePer100Gram } = req.body;
   
       // Validasi input dasar
-      if (!name || !pricePerGram) {
+      if (!name || !pricePer100Gram) {
         return res.status(400).send("Semua data jenis sampah wajib diisi.");
       }
   
       // Simpan data jenis sampah ke database
-      const newWasteTypeRef = await db.collection('waste_types').add({
+      const newWasteTypeRef = await db.collection('jenis_sampah').add({
         name: name,
-        pricePerGram: pricePerGram
+        pricePer100Gram: pricePer100Gram
       });
   
       res.status(201).send({ message: "Berhasil menambahkan jenis sampah", wasteTypeId: newWasteTypeRef.id });
@@ -511,7 +511,7 @@ app.post('/wastetypes', async (req, res) => {
 app.get('/wastetypes', async (req, res) => {
   try {
     // Mengambil semua data jenis sampah dari koleksi 'waste_types'
-    const wasteTypesRef = db.collection('waste_types');
+    const wasteTypesRef = db.collection('jenis_sampah');
     const snapshot = await wasteTypesRef.get();
 
     if (snapshot.empty) {
@@ -541,7 +541,7 @@ app.get('/wastetypes/search', async (req, res) => {
       return res.status(400).send("Query paramater name harus diberikan.");
     }
 
-    const wasteTypesRef = db.collection('waste_types');
+    const wasteTypesRef = db.collection('jenis_sampah');
     const snapshot = await wasteTypesRef.where('name', '==', name).get();
 
     if (snapshot.empty) {
@@ -571,7 +571,7 @@ app.put('/wastetypes/:id', async (req, res) => {
     }
 
     // Ambil referensi dokumen jenis sampah berdasarkan ID
-    const wasteTypeRef = db.collection('waste_types').doc(wasteTypeId);
+    const wasteTypeRef = db.collection('jenis_sampah').doc(wasteTypeId);
     const wasteTypeDoc = await wasteTypeRef.get();
 
     if (!wasteTypeDoc.exists) {
@@ -598,7 +598,7 @@ app.delete('/wastetypes/:id', async (req, res) => {
     const wasteTypeId = req.params.id;
 
     // Ambil referensi dokumen jenis sampah berdasarkan ID
-    const wasteTypeRef = db.collection('waste_types').doc(wasteTypeId);
+    const wasteTypeRef = db.collection('jenis_sampah').doc(wasteTypeId);
     const wasteTypeDoc = await wasteTypeRef.get();
 
     if (!wasteTypeDoc.exists) {
@@ -637,13 +637,13 @@ app.post('/tabung', async (req, res) => {
           }
 
           // Dapatkan harga per 100 gram dari jenis sampah yang sesuai
-          const wasteTypeDoc = await db.collection('waste_types').doc(wasteTypeId).get();
+          const wasteTypeDoc = await db.collection('jenis_sampah').doc(wasteTypeId).get();
           if (!wasteTypeDoc.exists) {
               return res.status(404).send(`Jenis sampah ${wasteTypeId} tidak ada.`);
           }
 
           const wasteTypeData = wasteTypeDoc.data();
-          const pricePer100Gram = wasteTypeData.pricePerGram;
+          const pricePer100Gram = wasteTypeData.pricePer100Gram;
 
           // Konversi jumlah dari kg ke 100 gram dan hitung total saldo untuk jenis sampah ini
           const amountInHundredGrams = (amount * 1000) / 100;
@@ -651,7 +651,7 @@ app.post('/tabung', async (req, res) => {
       }
 
       // Simpan data transaksi ke koleksi 'transactions' di Firestore
-      const newTransactionRef = await db.collection('transactions').add({
+      const newTransactionRef = await db.collection('transaksi').add({
           name: name,
           date: date,
           deposits: deposits,
@@ -659,7 +659,7 @@ app.post('/tabung', async (req, res) => {
       });
 
       // Update atau tambahkan data nasabah ke koleksi 'datasaving' di Firestore
-      const customerRef = db.collection('datasaving').doc(name);
+      const customerRef = db.collection('saldo_nasabah').doc(name);
       const customerDoc = await customerRef.get();
 
       if (customerDoc.exists) {
@@ -683,11 +683,9 @@ app.post('/tabung', async (req, res) => {
   }
 });
 
-
-
 app.get('/saldo', async (req, res) => {
   try {
-    const saldoRef = db.collection('datasaving');
+    const saldoRef = db.collection('saldo_nasabah');
     const snapshot = await saldoRef.get();
 
     if (snapshot.empty) {
@@ -711,7 +709,7 @@ app.get('/saldo', async (req, res) => {
 app.get('/tabung', async (req, res) => {
   try {
     // Mengambil semua data transaksi dari koleksi 'transactions'
-    const transactionsRef = db.collection('transactions');
+    const transactionsRef = db.collection('transaksi');
     const snapshot = await transactionsRef.get();
 
     if (snapshot.empty) {
@@ -738,7 +736,7 @@ app.get('/tabung/:id', async (req, res) => {
     const transactionId = req.params.id;
 
     // Ambil data transaksi berdasarkan ID
-    const transactionRef = db.collection('transactions').doc(transactionId);
+    const transactionRef = db.collection('transaksi').doc(transactionId);
     const transactionDoc = await transactionRef.get();
 
     if (!transactionDoc.exists) {
