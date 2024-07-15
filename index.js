@@ -791,21 +791,41 @@ app.post('/tabung', async (req, res) => {
       let mailOptions = {
           from: process.env.EMAIL_SECRET_KEY,
           to: email,
-          subject: 'Nota Elektronik Penabungan Sampah',
-          html: `<h3>Nota Elektronik</h3>
+          subject: 'Nota Menabung Sampah - WasteApp',
+          html: `<h3>Data Transaksi Menabung Sampah</h3>
                  <p>Nama: ${name}</p>
                  <p>Tanggal: ${date}</p>
                  <p>Deposits:</p>
                  <ul>
                    ${Object.keys(wasteAmounts).map(wasteTypeId => `<li>Jenis Sampah: ${wasteNames[wasteTypeId]}, Jumlah: ${wasteAmounts[wasteTypeId]} kg</li>`).join('')}
                  </ul>
-                 <p>Total Saldo: ${totalBalance}</p>`
+                 <p>Saldo Masuk: ${totalBalance}</p>`
       };
 
       await transporter.sendMail(mailOptions);
 
       res.status(201).send({ message: "Berhasil menabung sampah dan nota elektronik telah dikirimkan", transactionId: newTransactionRef.id });
 
+  } catch (error) {
+      res.status(500).send(error.message);
+  }
+});
+
+app.get('/jumlahsampah', async (req, res) => {
+  try {
+      // Ambil semua data dari koleksi 'jumlah_sampah'
+      const jumlahSampahSnapshot = await db.collection('jumlah_sampah').get();
+      if (jumlahSampahSnapshot.empty) {
+          return res.status(404).send("Tidak ada data di koleksi jumlah_sampah.");
+      }
+
+      // Buat array untuk menampung data
+      let jumlahSampahData = [];
+      jumlahSampahSnapshot.forEach(doc => {
+          jumlahSampahData.push({ id: doc.id, ...doc.data() });
+      });
+
+      res.status(200).send(jumlahSampahData);
   } catch (error) {
       res.status(500).send(error.message);
   }
