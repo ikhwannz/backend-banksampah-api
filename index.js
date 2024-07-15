@@ -256,13 +256,12 @@ app.put('/users/me/password', verifyToken, async (req, res) => {
   }
 });
 
-//Mendaftarkan nasabah baru
 app.post('/nasabah', async (req, res) => {
   try {
-    const { name, phoneNumber, address } = req.body;
+    const { name, phoneNumber, address, email } = req.body;
 
     // Validasi input dasar
-    if (!name || !phoneNumber || !address) {
+    if (!name || !phoneNumber || !address || !email) {
       return res.status(400).send("Semua data wajib diisi.");
     }
 
@@ -278,11 +277,18 @@ app.post('/nasabah', async (req, res) => {
       return res.status(400).send("Nama sudah dipakai oleh nasabah lain.");
     }
 
+    // Verifikasi bahwa email belum terdaftar (opsional)
+    const existingCustomerByEmail = await db.collection('nasabah').where('email', '==', email).get();
+    if (!existingCustomerByEmail.empty) {
+      return res.status(400).send("Email sudah dipakai oleh nasabah lain.");
+    }
+
     // Simpan data nasabah ke database
     const newCustomerRef = await db.collection('nasabah').add({
       name: name,
       phoneNumber: phoneNumber,
-      address: address
+      address: address,
+      email: email
     });
 
     res.status(201).send({ message: "Berhasil registrasi nasabah baru", customerId: newCustomerRef.id });
@@ -290,6 +296,10 @@ app.post('/nasabah', async (req, res) => {
   } catch (error) {
     res.status(500).send(error.message);
   }
+});
+
+app.listen(port, () => {
+  console.log(`Server is running on http://localhost:${port}`);
 });
 
 //Mendapatkan seluruh data nasabah
