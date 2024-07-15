@@ -622,7 +622,7 @@ app.delete('/wastetypes/:id', async (req, res) => {
   }
 });
 
-app.post('/reduce-waste', async (req, res) => {
+app.post('/jualsampah', async (req, res) => {
   try {
       const { wasteTypeId, amount } = req.body;
 
@@ -817,7 +817,7 @@ app.post('/tabung', async (req, res) => {
   }
 });
 
-app.get('/jumlahsampah', async (req, res) => {
+app.get('/stoksampah', async (req, res) => {
   try {
       // Ambil semua data dari koleksi 'jumlah_sampah'
       const jumlahSampahSnapshot = await db.collection('jumlah_sampah').get();
