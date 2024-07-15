@@ -298,10 +298,6 @@ app.post('/nasabah', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-});
-
 //Mendapatkan seluruh data nasabah
 app.get('/nasabah', async (req, res) => {
     try {
