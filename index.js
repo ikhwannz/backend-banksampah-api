@@ -969,22 +969,33 @@ app.get('/tabung', async (req, res) => {
 // Mendapatkan detail data dari riwayat tabung
 app.get('/tabung/:id', async (req, res) => {
   try {
-    const transactionId = req.params.id;
+      const transactionId = req.params.id;
 
-    // Ambil data transaksi berdasarkan ID
-    const transactionRef = db.collection('transaksi').doc(transactionId);
-    const transactionDoc = await transactionRef.get();
+      // Ambil data transaksi berdasarkan ID
+      const transactionRef = db.collection('transaksi').doc(transactionId);
+      const transactionDoc = await transactionRef.get();
 
-    if (!transactionDoc.exists) {
-      return res.status(404).send("Tidak ditemukan data transaksi ini.");
-    }
+      if (!transactionDoc.exists) {
+          return res.status(404).send("Tidak ditemukan data transaksi ini.");
+      }
 
-    let transactionData = transactionDoc.data();
-    transactionData.id = transactionId; // Tambahkan ID transaksi ke dalam data transaksi
+      let transactionData = transactionDoc.data();
+      transactionData.id = transactionId; // Tambahkan ID transaksi ke dalam data transaksi
 
-    res.status(200).send(transactionData);
+      // Ambil total saldo nasabah dari koleksi 'saldo_nasabah'
+      const saldoRef = db.collection('saldo_nasabah').doc(transactionData.name);
+      const saldoDoc = await saldoRef.get();
+
+      if (!saldoDoc.exists) {
+          return res.status(404).send("Tidak ditemukan data saldo nasabah.");
+      }
+
+      let saldoData = saldoDoc.data();
+      transactionData.totalSaldoNasabah = saldoData.totalBalance;
+
+      res.status(200).send(transactionData);
   } catch (error) {
-    res.status(500).send(error.message);
+      res.status(500).send(error.message);
   }
 });
   
