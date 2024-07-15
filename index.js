@@ -706,8 +706,51 @@ app.post('/tabung', async (req, res) => {
               });
           }
       }
-
       res.status(201).send({ message: "Berhasil menabung sampah", transactionId: newTransactionRef.id });
+  } catch (error) {
+      res.status(500).send(error.message);
+  }
+});
+
+app.post('/tariksaldo', async (req, res) => {
+  try {
+      const { name, amount } = req.body;
+
+      // Validasi input
+      if (!name || amount == null || isNaN(amount) || amount <= 0) {
+          return res.status(400).send("Nama nasabah dan jumlah penarikan yang valid wajib diisi.");
+      }
+
+      // Ambil data nasabah dari koleksi 'saldo_nasabah'
+      const customerRef = db.collection('saldo_nasabah').doc(name);
+      const customerDoc = await customerRef.get();
+
+      if (!customerDoc.exists) {
+          return res.status(404).send("Nasabah tidak ditemukan.");
+      }
+
+      const customerData = customerDoc.data();
+      const currentBalance = customerData.totalBalance;
+
+      // Periksa apakah saldo cukup untuk penarikan
+      if (currentBalance < amount) {
+          return res.status(400).send("Saldo tidak mencukupi untuk penarikan.");
+      }
+
+      // Kurangi saldo nasabah
+      const newBalance = currentBalance - amount;
+      await customerRef.update({
+          totalBalance: newBalance
+      });
+
+      // Simpan data penarikan ke koleksi 'withdrawals'
+      await db.collection('saldo_keluar').add({
+          name: name,
+          amount: amount,
+          date: new Date().toISOString()
+      });
+
+      res.status(201).send({ message: "Penarikan saldo berhasil", newBalance: newBalance });
 
   } catch (error) {
       res.status(500).send(error.message);
