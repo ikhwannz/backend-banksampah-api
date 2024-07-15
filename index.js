@@ -6,6 +6,7 @@ const saltRounds = 10;
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
+const moment = require('moment-timezone');
 
 const app = express();
 app.use(cors());
@@ -652,11 +653,13 @@ app.post('/reduce-waste', async (req, res) => {
           totalAmount: newAmount
       });
 
+      const currentDate = moment().tz('Asia/Jakarta').format();
+
       // Simpan data pengurangan ke koleksi 'waste_reductions'
       await db.collection('waste_reductions').add({
           wasteTypeId: wasteTypeId,
           amount: amount,
-          date: new Date().toISOString()
+          date: currentDate
       });
 
       res.status(201).send({ message: "Pengurangan jumlah sampah berhasil", newAmount: newAmount });
@@ -885,11 +888,13 @@ app.post('/tariksaldo', async (req, res) => {
           totalBalance: newBalance
       });
 
+      const currentDate = moment().tz('Asia/Jakarta').format();
+
       // Simpan data penarikan ke koleksi 'saldo_keluar'
       const withdrawalRef = await db.collection('saldo_keluar').add({
           name: name,
           amount: amount,
-          date: new Date().toISOString()
+          date: currentDate
       });
 
       // Ambil data nasabah untuk mendapatkan email
