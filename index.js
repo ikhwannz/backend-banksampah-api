@@ -614,6 +614,51 @@ app.delete('/wastetypes/:id', async (req, res) => {
   }
 });
 
+app.post('/reduce-waste', async (req, res) => {
+  try {
+      const { wasteTypeId, amount } = req.body;
+
+      // Validasi input
+      if (!wasteTypeId || amount == null || isNaN(amount) || amount <= 0) {
+          return res.status(400).send("Jenis sampah dan jumlah sampah yang valid wajib diisi.");
+      }
+
+      // Ambil data jenis sampah dari koleksi 'jumlah_sampah'
+      const wasteAmountRef = db.collection('jumlah_sampah').doc(wasteTypeId);
+      const wasteAmountDoc = await wasteAmountRef.get();
+
+      if (!wasteAmountDoc.exists) {
+          return res.status(404).send("Jenis sampah tidak ditemukan.");
+      }
+
+      const wasteAmountData = wasteAmountDoc.data();
+      const currentAmount = wasteAmountData.totalAmount;
+
+      // Periksa apakah jumlah sampah cukup untuk dikurangi
+      if (currentAmount < amount) {
+          return res.status(400).send("Jumlah sampah tidak mencukupi untuk pengurangan.");
+      }
+
+      // Kurangi jumlah sampah
+      const newAmount = currentAmount - amount;
+      await wasteAmountRef.update({
+          totalAmount: newAmount
+      });
+
+      // Simpan data pengurangan ke koleksi 'waste_reductions'
+      await db.collection('waste_reductions').add({
+          wasteTypeId: wasteTypeId,
+          amount: amount,
+          date: new Date().toISOString()
+      });
+
+      res.status(201).send({ message: "Pengurangan jumlah sampah berhasil", newAmount: newAmount });
+
+  } catch (error) {
+      res.status(500).send(error.message);
+  }
+});
+
 // Menabung sampah
 app.post('/tabung', async (req, res) => {
   try {
