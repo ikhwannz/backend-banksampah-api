@@ -786,7 +786,7 @@ app.post('/tabung', async (req, res) => {
         });
 
         let mailOptions = {
-            from: 'projectwasteapp@gmail.com',
+            from: process.env.EMAIL_SECRET_KEY,
             to: email,
             subject: 'Nota Elektronik Penabungan Sampah',
             html: `<h3>Nota Elektronik</h3>
