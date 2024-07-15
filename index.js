@@ -831,6 +831,26 @@ app.get('/jumlahsampah', async (req, res) => {
   }
 });
 
+app.get('/stoksampahkeluar', async (req, res) => {
+  try {
+      // Ambil semua data dari koleksi 'waste_reductions'
+      const wasteReductionsSnapshot = await db.collection('waste_reductions').get();
+      if (wasteReductionsSnapshot.empty) {
+          return res.status(404).send("Tidak ada data di koleksi waste_reductions.");
+      }
+
+      // Buat array untuk menampung data
+      let wasteReductionsData = [];
+      wasteReductionsSnapshot.forEach(doc => {
+          wasteReductionsData.push({ id: doc.id, ...doc.data() });
+      });
+
+      res.status(200).send(wasteReductionsData);
+  } catch (error) {
+      res.status(500).send(error.message);
+  }
+});
+
 app.post('/tariksaldo', async (req, res) => {
   try {
       const { name, amount } = req.body;
@@ -871,6 +891,26 @@ app.post('/tariksaldo', async (req, res) => {
 
       res.status(201).send({ message: "Penarikan saldo berhasil", newBalance: newBalance });
 
+  } catch (error) {
+      res.status(500).send(error.message);
+  }
+});
+
+app.get('/saldokeluar', async (req, res) => {
+  try {
+      // Ambil semua data dari koleksi 'saldo_keluar'
+      const saldoKeluarSnapshot = await db.collection('saldo_keluar').get();
+      if (saldoKeluarSnapshot.empty) {
+          return res.status(404).send("Tidak ada data di koleksi saldo_keluar.");
+      }
+
+      // Buat array untuk menampung data
+      let saldoKeluarData = [];
+      saldoKeluarSnapshot.forEach(doc => {
+          saldoKeluarData.push({ id: doc.id, ...doc.data() });
+      });
+
+      res.status(200).send(saldoKeluarData);
   } catch (error) {
       res.status(500).send(error.message);
   }
