@@ -793,13 +793,16 @@ app.post('/tabung', async (req, res) => {
           to: email,
           subject: 'Nota Menabung Sampah - WasteApp',
           html: `<h3>Data Transaksi Menabung Sampah</h3>
+                 --------------------------------------- 
                  <p>Nama: ${name}</p>
                  <p>Tanggal: ${date}</p>
                  <p>Deposits:</p>
                  <ul>
                    ${Object.keys(wasteAmounts).map(wasteTypeId => `<li>Jenis Sampah: ${wasteNames[wasteTypeId]}, Jumlah: ${wasteAmounts[wasteTypeId]} kg</li>`).join('')}
                  </ul>
-                 <p>Saldo Masuk: ${totalBalance}</p>`
+                 ---------------------------------------
+                 <p>Saldo Masuk: ${totalBalance}</p>
+                 <p>-- Terimakasih sudah menabung di bank sampah WasteApp -- </p>`
       };
 
       await transporter.sendMail(mailOptions);
