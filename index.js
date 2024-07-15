@@ -885,19 +885,59 @@ app.post('/tariksaldo', async (req, res) => {
           totalBalance: newBalance
       });
 
-      // Simpan data penarikan ke koleksi 'withdrawals'
-      await db.collection('saldo_keluar').add({
+      // Simpan data penarikan ke koleksi 'saldo_keluar'
+      const withdrawalRef = await db.collection('saldo_keluar').add({
           name: name,
           amount: amount,
           date: new Date().toISOString()
       });
 
-      res.status(201).send({ message: "Penarikan saldo berhasil", newBalance: newBalance });
+      // Ambil data nasabah untuk mendapatkan email
+      const nasabahRef = db.collection('nasabah').where('name', '==', name);
+      const nasabahSnapshot = await nasabahRef.get();
+
+      if (nasabahSnapshot.empty) {
+          return res.status(404).send("Nasabah tidak ditemukan.");
+      }
+
+      let email;
+      nasabahSnapshot.forEach(doc => {
+          email = doc.data().email;
+      });
+
+      if (!email) {
+          return res.status(400).send("Email nasabah tidak ditemukan.");
+      }
+
+      // Mengirim email nota penarikan saldo
+      let transporter = nodemailer.createTransport({
+          service: 'hotmail',
+          auth: {
+              user: process.env.EMAIL_SECRET_KEY,
+              pass: process.env.PASS_SECRET_KEY
+          }
+      });
+
+      let mailOptions = {
+          from: process.env.EMAIL_SECRET_KEY,
+          to: email,
+          subject: 'Nota Penarikan Saldo Bank Sampah',
+          html: `<h3>Nota Penarikan Saldo</h3>
+                 <p>Nama: ${name}</p>
+                 <p>Tanggal: ${new Date().toISOString()}</p>
+                 <p>Jumlah Penarikan: ${amount}</p>
+                 <p>Sisa Saldo: ${newBalance}</p>`
+      };
+
+      await transporter.sendMail(mailOptions);
+
+      res.status(201).send({ message: "Penarikan saldo berhasil dan nota elektronik telah dikirimkan", newBalance: newBalance });
 
   } catch (error) {
       res.status(500).send(error.message);
   }
 });
+
 
 app.get('/saldokeluar', async (req, res) => {
   try {
@@ -969,33 +1009,22 @@ app.get('/tabung', async (req, res) => {
 // Mendapatkan detail data dari riwayat tabung
 app.get('/tabung/:id', async (req, res) => {
   try {
-      const transactionId = req.params.id;
+    const transactionId = req.params.id;
 
-      // Ambil data transaksi berdasarkan ID
-      const transactionRef = db.collection('transaksi').doc(transactionId);
-      const transactionDoc = await transactionRef.get();
+    // Ambil data transaksi berdasarkan ID
+    const transactionRef = db.collection('transaksi').doc(transactionId);
+    const transactionDoc = await transactionRef.get();
 
-      if (!transactionDoc.exists) {
-          return res.status(404).send("Tidak ditemukan data transaksi ini.");
-      }
+    if (!transactionDoc.exists) {
+      return res.status(404).send("Tidak ditemukan data transaksi ini.");
+    }
 
-      let transactionData = transactionDoc.data();
-      transactionData.id = transactionId; // Tambahkan ID transaksi ke dalam data transaksi
+    let transactionData = transactionDoc.data();
+    transactionData.id = transactionId; // Tambahkan ID transaksi ke dalam data transaksi
 
-      // Ambil total saldo nasabah dari koleksi 'saldo_nasabah'
-      const saldoRef = db.collection('saldo_nasabah').doc(transactionData.name);
-      const saldoDoc = await saldoRef.get();
-
-      if (!saldoDoc.exists) {
-          return res.status(404).send("Tidak ditemukan data saldo nasabah.");
-      }
-
-      let saldoData = saldoDoc.data();
-      transactionData.totalSaldoNasabah = saldoData.totalBalance;
-
-      res.status(200).send(transactionData);
+    res.status(200).send(transactionData);
   } catch (error) {
-      res.status(500).send(error.message);
+    res.status(500).send(error.message);
   }
 });
   
