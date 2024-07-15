@@ -778,7 +778,7 @@ app.post('/tabung', async (req, res) => {
 
         // Mengirim email nota elektronik
         let transporter = nodemailer.createTransport({
-            service: 'gmail',
+            service: 'hotmail',
             auth: {
                 user: process.env.EMAIL_SECRET_KEY,
                 pass: process.env.PASS_SECRET_KEY
