@@ -780,8 +780,8 @@ app.post('/tabung', async (req, res) => {
         let transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
-                user: 'projectwasteapp@gmail.com',
-                pass: 'projectwasteapp123'
+                user: process.env.EMAIL_SECRET_KEY,
+                pass: process.env.PASS_SECRET_KEY
             }
         });
 
