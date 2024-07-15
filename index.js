@@ -783,13 +783,13 @@ app.post('/tabung', async (req, res) => {
       let transporter = nodemailer.createTransport({
           service: 'hotmail',
           auth: {
-              user: 'your-email@outlook.com',
-              pass: 'your-password'
+              user: process.env.EMAIL_SECRET_KEY,
+              pass: process.env.PASS_SECRET_KEY
           }
       });
 
       let mailOptions = {
-          from: 'your-email@outlook.com',
+          from: process.env.EMAIL_SECRET_KEY,
           to: email,
           subject: 'Nota Elektronik Penabungan Sampah',
           html: `<h3>Nota Elektronik</h3>
