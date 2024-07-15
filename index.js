@@ -627,6 +627,9 @@ app.post('/tabung', async (req, res) => {
       // Membuat variabel untuk total saldo
       let totalBalance = 0;
 
+      // Membuat objek untuk menyimpan jumlah sampah berdasarkan jenis
+      let wasteAmounts = {};
+
       // Iterasi melalui setiap entri deposit
       for (const tabung of deposits) {
           const { wasteTypeId, amount } = tabung;
@@ -648,6 +651,13 @@ app.post('/tabung', async (req, res) => {
           // Konversi jumlah dari kg ke 100 gram dan hitung total saldo untuk jenis sampah ini
           const amountInHundredGrams = (amount * 1000) / 100;
           totalBalance += pricePer100Gram * amountInHundredGrams;
+
+          // Tambahkan jumlah ke wasteAmounts
+          if (wasteAmounts[wasteTypeId]) {
+              wasteAmounts[wasteTypeId] += amount;
+          } else {
+              wasteAmounts[wasteTypeId] = amount;
+          }
       }
 
       // Simpan data transaksi ke koleksi 'transactions' di Firestore
@@ -658,7 +668,7 @@ app.post('/tabung', async (req, res) => {
           totalBalance: totalBalance
       });
 
-      // Update atau tambahkan data nasabah ke koleksi 'datasaving' di Firestore
+      // Update atau tambahkan data nasabah ke koleksi 'saldo_nasabah' di Firestore
       const customerRef = db.collection('saldo_nasabah').doc(name);
       const customerDoc = await customerRef.get();
 
@@ -674,6 +684,27 @@ app.post('/tabung', async (req, res) => {
               name: name,
               totalBalance: totalBalance
           });
+      }
+
+      // Update jumlah sampah berdasarkan jenis di koleksi 'jumlah_sampah'
+      for (const wasteTypeId in wasteAmounts) {
+          const wasteAmount = wasteAmounts[wasteTypeId];
+          const wasteAmountRef = db.collection('jumlah_sampah').doc(wasteTypeId);
+          const wasteAmountDoc = await wasteAmountRef.get();
+
+          if (wasteAmountDoc.exists) {
+              // Jika data jenis sampah sudah ada, update jumlahnya
+              const existingAmount = wasteAmountDoc.data().totalAmount || 0;
+              await wasteAmountRef.update({
+                  totalAmount: existingAmount + wasteAmount
+              });
+          } else {
+              // Jika data jenis sampah belum ada, tambahkan data baru
+              await wasteAmountRef.set({
+                  wasteTypeId: wasteTypeId,
+                  totalAmount: wasteAmount
+              });
+          }
       }
 
       res.status(201).send({ message: "Berhasil menabung sampah", transactionId: newTransactionRef.id });
