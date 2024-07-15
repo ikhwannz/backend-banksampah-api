@@ -667,100 +667,144 @@ app.post('/reduce-waste', async (req, res) => {
 
 // Menabung sampah
 app.post('/tabung', async (req, res) => {
-  try {
-      const { name, date, deposits } = req.body;
+    try {
+        const { name, date, deposits } = req.body;
 
-      // Validasi input dasar
-      if (!name || !date || !deposits || !Array.isArray(deposits) || deposits.length === 0) {
-          return res.status(400).send("Semua data wajib diisi.");
-      }
+        // Validasi input dasar
+        if (!name || !date || !deposits || !Array.isArray(deposits) || deposits.length === 0) {
+            return res.status(400).send("Semua data wajib diisi.");
+        }
 
-      // Membuat variabel untuk total saldo
-      let totalBalance = 0;
+        // Ambil data nasabah untuk mendapatkan email
+        const nasabahRef = db.collection('nasabah').where('name', '==', name);
+        const nasabahSnapshot = await nasabahRef.get();
 
-      // Membuat objek untuk menyimpan jumlah sampah berdasarkan jenis
-      let wasteAmounts = {};
+        if (nasabahSnapshot.empty) {
+            return res.status(404).send("Nasabah tidak ditemukan.");
+        }
 
-      // Iterasi melalui setiap entri deposit
-      for (const tabung of deposits) {
-          const { wasteTypeId, amount } = tabung;
+        let email;
+        nasabahSnapshot.forEach(doc => {
+            email = doc.data().email;
+        });
 
-          // Validasi input untuk setiap entri deposit
-          if (!wasteTypeId || amount == null || isNaN(amount) || amount <= 0) {
-              return res.status(400).send("Setidaknya masukkan 1 jenis sampah dengan jumlah yang valid.");
-          }
+        if (!email) {
+            return res.status(400).send("Email nasabah tidak ditemukan.");
+        }
 
-          // Dapatkan harga per 100 gram dari jenis sampah yang sesuai
-          const wasteTypeDoc = await db.collection('jenis_sampah').doc(wasteTypeId).get();
-          if (!wasteTypeDoc.exists) {
-              return res.status(404).send(`Jenis sampah ${wasteTypeId} tidak ada.`);
-          }
+        // Membuat variabel untuk total saldo
+        let totalBalance = 0;
 
-          const wasteTypeData = wasteTypeDoc.data();
-          const pricePer100Gram = wasteTypeData.pricePer100Gram;
+        // Membuat objek untuk menyimpan jumlah sampah berdasarkan jenis
+        let wasteAmounts = {};
 
-          // Konversi jumlah dari kg ke 100 gram dan hitung total saldo untuk jenis sampah ini
-          const amountInHundredGrams = (amount * 1000) / 100;
-          totalBalance += pricePer100Gram * amountInHundredGrams;
+        // Iterasi melalui setiap entri deposit
+        for (const tabung of deposits) {
+            const { wasteTypeId, amount } = tabung;
 
-          // Tambahkan jumlah ke wasteAmounts
-          if (wasteAmounts[wasteTypeId]) {
-              wasteAmounts[wasteTypeId] += amount;
-          } else {
-              wasteAmounts[wasteTypeId] = amount;
-          }
-      }
+            // Validasi input untuk setiap entri deposit
+            if (!wasteTypeId || amount == null || isNaN(amount) || amount <= 0) {
+                return res.status(400).send("Setidaknya masukkan 1 jenis sampah dengan jumlah yang valid.");
+            }
 
-      // Simpan data transaksi ke koleksi 'transactions' di Firestore
-      const newTransactionRef = await db.collection('transaksi').add({
-          name: name,
-          date: date,
-          deposits: deposits,
-          totalBalance: totalBalance
-      });
+            // Dapatkan harga per 100 gram dari jenis sampah yang sesuai
+            const wasteTypeDoc = await db.collection('jenis_sampah').doc(wasteTypeId).get();
+            if (!wasteTypeDoc.exists) {
+                return res.status(404).send(`Jenis sampah ${wasteTypeId} tidak ada.`);
+            }
 
-      // Update atau tambahkan data nasabah ke koleksi 'saldo_nasabah' di Firestore
-      const customerRef = db.collection('saldo_nasabah').doc(name);
-      const customerDoc = await customerRef.get();
+            const wasteTypeData = wasteTypeDoc.data();
+            const pricePer100Gram = wasteTypeData.pricePer100Gram;
 
-      if (customerDoc.exists) {
-          // Jika nasabah sudah ada, update total saldo
-          const existingBalance = customerDoc.data().totalBalance || 0;
-          await customerRef.update({
-              totalBalance: existingBalance + totalBalance
-          });
-      } else {
-          // Jika nasabah belum ada, tambahkan data nasabah baru
-          await customerRef.set({
-              name: name,
-              totalBalance: totalBalance
-          });
-      }
+            // Konversi jumlah dari kg ke 100 gram dan hitung total saldo untuk jenis sampah ini
+            const amountInHundredGrams = (amount * 1000) / 100;
+            totalBalance += pricePer100Gram * amountInHundredGrams;
 
-      // Update jumlah sampah berdasarkan jenis di koleksi 'jumlah_sampah'
-      for (const wasteTypeId in wasteAmounts) {
-          const wasteAmount = wasteAmounts[wasteTypeId];
-          const wasteAmountRef = db.collection('jumlah_sampah').doc(wasteTypeId);
-          const wasteAmountDoc = await wasteAmountRef.get();
+            // Tambahkan jumlah ke wasteAmounts
+            if (wasteAmounts[wasteTypeId]) {
+                wasteAmounts[wasteTypeId] += amount;
+            } else {
+                wasteAmounts[wasteTypeId] = amount;
+            }
+        }
 
-          if (wasteAmountDoc.exists) {
-              // Jika data jenis sampah sudah ada, update jumlahnya
-              const existingAmount = wasteAmountDoc.data().totalAmount || 0;
-              await wasteAmountRef.update({
-                  totalAmount: existingAmount + wasteAmount
-              });
-          } else {
-              // Jika data jenis sampah belum ada, tambahkan data baru
-              await wasteAmountRef.set({
-                  wasteTypeId: wasteTypeId,
-                  totalAmount: wasteAmount
-              });
-          }
-      }
-      res.status(201).send({ message: "Berhasil menabung sampah", transactionId: newTransactionRef.id });
-  } catch (error) {
-      res.status(500).send(error.message);
-  }
+        // Simpan data transaksi ke koleksi 'transaksi' di Firestore
+        const newTransactionRef = await db.collection('transaksi').add({
+            name: name,
+            date: date,
+            deposits: deposits,
+            totalBalance: totalBalance
+        });
+
+        // Update atau tambahkan data nasabah ke koleksi 'saldo_nasabah' di Firestore
+        const customerRef = db.collection('saldo_nasabah').doc(name);
+        const customerDoc = await customerRef.get();
+
+        if (customerDoc.exists) {
+            // Jika nasabah sudah ada, update total saldo
+            const existingBalance = customerDoc.data().totalBalance || 0;
+            await customerRef.update({
+                totalBalance: existingBalance + totalBalance
+            });
+        } else {
+            // Jika nasabah belum ada, tambahkan data nasabah baru
+            await customerRef.set({
+                name: name,
+                totalBalance: totalBalance
+            });
+        }
+
+        // Update jumlah sampah berdasarkan jenis di koleksi 'jumlah_sampah'
+        for (const wasteTypeId in wasteAmounts) {
+            const wasteAmount = wasteAmounts[wasteTypeId];
+            const wasteAmountRef = db.collection('jumlah_sampah').doc(wasteTypeId);
+            const wasteAmountDoc = await wasteAmountRef.get();
+
+            if (wasteAmountDoc.exists) {
+                // Jika data jenis sampah sudah ada, update jumlahnya
+                const existingAmount = wasteAmountDoc.data().totalAmount || 0;
+                await wasteAmountRef.update({
+                    totalAmount: existingAmount + wasteAmount
+                });
+            } else {
+                // Jika data jenis sampah belum ada, tambahkan data baru
+                await wasteAmountRef.set({
+                    wasteTypeId: wasteTypeId,
+                    totalAmount: wasteAmount
+                });
+            }
+        }
+
+        // Mengirim email nota elektronik
+        let transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: 'projectwasteapp@gmail.com',
+                pass: 'projectwasteapp123'
+            }
+        });
+
+        let mailOptions = {
+            from: 'projectwasteapp@gmail.com',
+            to: email,
+            subject: 'Nota Elektronik Penabungan Sampah',
+            html: `<h3>Nota Elektronik</h3>
+                   <p>Nama: ${name}</p>
+                   <p>Tanggal: ${date}</p>
+                   <p>Deposits:</p>
+                   <ul>
+                     ${deposits.map(d => `<li>Jenis Sampah: ${d.wasteTypeId}, Jumlah: ${d.amount} kg</li>`).join('')}
+                   </ul>
+                   <p>Total Saldo: ${totalBalance}</p>`
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        res.status(201).send({ message: "Berhasil menabung sampah dan nota elektronik telah dikirimkan", transactionId: newTransactionRef.id });
+
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
 });
 
 app.post('/tariksaldo', async (req, res) => {
