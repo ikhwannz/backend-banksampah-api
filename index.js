@@ -1042,8 +1042,8 @@ app.get('/totalsaldo', async (req, res) => {
       let totalSaldo = 0;
       snapshot.forEach(doc => {
           const customerData = doc.data();
-          if (customerData.balance && !isNaN(customerData.balance)) {
-              totalSaldo += customerData.balance;
+          if (customerData.totalBalance && !isNaN(customerData.totalBalance)) {
+              totalSaldo += customerData.totalBalance;
           }
       });
 
