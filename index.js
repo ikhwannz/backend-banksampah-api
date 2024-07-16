@@ -828,7 +828,6 @@ app.post('/tabung', async (req, res) => {
                  <tr><td>Deposit</td><td>:</td><td><ul>
                    ${Object.keys(wasteAmounts).map(wasteTypeId => `<li>Jenis Sampah: ${wasteNames[wasteTypeId]}, Jumlah: ${wasteAmounts[wasteTypeId]} kg</li>`).join('')}
                  </ul></td></tr>
-                 <tr><td>Catatan</td><td>:</td><td>${note}</td></tr>
                  </tbody>
                  </table>
                  <p>--------------------------------------------------------------------------------------------------------------------------------</p>
