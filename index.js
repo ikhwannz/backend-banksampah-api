@@ -819,18 +819,20 @@ app.post('/tabung', async (req, res) => {
           to: email,
           subject: 'Nota Menabung Sampah - WasteApp',
           html: `<h2 style="text-align:center">Menabung Sampah Berhasil</h2>
-                 ---------------------------------------------------------------------- 
+                 <p>----------------------------------------------------------------------</p> 
                  <p>Anda berhasil menabung sampah dengan rincian sebagai berikut.</p>
-                 <pre>
-                 <p>Nama          : ${name}</p>
-                 <p>Tanggal       : ${date}</p>
-                 <p>Deposits      : </p>
-                 <ul>
+                 <table>
+                 <tbody>
+                 <tr><td>Nama</td><td>:</td><td>${name}</td></tr>
+                 <tr><td>Tanggal</td><td>:</td><td>${date}</td></tr>
+                 <tr><td>Deposit</td><td>:</td><td><ul>
                    ${Object.keys(wasteAmounts).map(wasteTypeId => `<li>Jenis Sampah: ${wasteNames[wasteTypeId]}, Jumlah: ${wasteAmounts[wasteTypeId]} kg</li>`).join('')}
-                 </ul>
-                 -----------------------------------------------------------------------
-                 <p>Saldo Masuk   : ${totalBalance}</p>
-                 </pre>
+                 </ul></td></tr>
+                 <tr><td>Catatan</td><td>:</td><td>${note}</td></tr>
+                 </tbody>
+                 </table>
+                 <p>-----------------------------------------------------------------------</p>
+                 <h4>Saldo Masuk   : ${totalBalance}</h4>
                  <p>-- Terimakasih sudah menabung di bank sampah WasteApp -- </p>`
       };
 
@@ -981,8 +983,8 @@ app.post('/tariksaldo', async (req, res) => {
           from: process.env.EMAIL_SECRET_KEY,
           to: email,
           subject: 'Nota Penarikan Saldo - WasteApp',
-          html: `<h3>Tarik Saldo Berhasil</h3>
-                 <p>------------------------------------</p> 
+          html: `<h1>Tarik Saldo Berhasil</h1>
+                 <p>---------------------------------------------------------------</p> 
                  <p>Anda telah berhasil Tarik Saldo dengan rincian sebagai berikut.</p>
                  <table>
                  <tbody>
@@ -992,8 +994,8 @@ app.post('/tariksaldo', async (req, res) => {
                  <tr><td>Catatan</td><td>:</td><td>${note}</td></tr>
                  </tbody>
                  </table>
-                 <p>------------------------------------</p> 
-                 <p>Sisa Saldo        : ${newBalance}</p>
+                 <p>---------------------------------------------------------------</p> 
+                 <h4>Sisa Saldo        : ${newBalance}</h4>
                  
                  <p>-- Terimakasih -- </p>`
       };
