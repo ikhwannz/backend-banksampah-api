@@ -685,7 +685,7 @@ app.post('/jualsampah', async (req, res) => {
           date: currentDate
       });
 
-      res.status(201).send({ message: "Pengurangan jumlah sampah berhasil", newAmount: newAmount });
+      res.status(201).send({ message: "Jual/setor sampah berhasil", newAmount: newAmount });
 
   } catch (error) {
       res.status(500).send(error.message);
