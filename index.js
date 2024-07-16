@@ -818,16 +818,17 @@ app.post('/tabung', async (req, res) => {
           from: process.env.EMAIL_SECRET_KEY,
           to: email,
           subject: 'Nota Menabung Sampah - WasteApp',
-          html: `<h3>Data Transaksi Menabung Sampah</h3>
+          html: `<h3>Menabung Sampah Berhasil</h3>
                  --------------------------------------- 
-                 <p>Nama: ${name}</p>
-                 <p>Tanggal: ${date}</p>
-                 <p>Deposits:</p>
+                 <p>Anda berhasil menabung sampah dengan rincian sebagai berikut.</p>
+                 <p>Nama          : ${name}</p>
+                 <p>Tanggal       : ${date}</p>
+                 <p>Jenis Sampah  : </p>
                  <ul>
                    ${Object.keys(wasteAmounts).map(wasteTypeId => `<li>Jenis Sampah: ${wasteNames[wasteTypeId]}, Jumlah: ${wasteAmounts[wasteTypeId]} kg</li>`).join('')}
                  </ul>
                  ---------------------------------------
-                 <p>Saldo Masuk: ${totalBalance}</p>
+                 <p>Saldo Masuk   : ${totalBalance}</p>
                  <p>-- Terimakasih sudah menabung di bank sampah WasteApp -- </p>`
       };
 
@@ -977,13 +978,17 @@ app.post('/tariksaldo', async (req, res) => {
       let mailOptions = {
           from: process.env.EMAIL_SECRET_KEY,
           to: email,
-          subject: 'Nota Penarikan Saldo Bank Sampah',
-          html: `<h3>Nota Tarik Saldo Nasabah</h3>
-                 <p>Nama: ${name}</p>
-                 <p>Tanggal: ${new Date().toISOString()}</p>
-                 <p>Jumlah Penarikan: ${amount}</p>
-                 <p>Catatan: ${note}</p>
-                 <p>Sisa Saldo: ${newBalance}</p>`
+          subject: 'Nota Penarikan Saldo - WasteApp',
+          html: `<h3>Tarik Saldo Berhasil</h3>
+                 <p>------------------------------------</p> 
+                 <p>Anda telah berhasil Tarik Saldo dengan rincian sebagai berikut.</p>
+                 <p>Nama              : ${name}</p>
+                 <p>Tanggal           : ${new Date().toISOString()}</p>
+                 <p>Jumlah Penarikan  : ${amount}</p>
+                 <p>Catatan           : ${note}</p>
+                 <p>------------------------------------</p> 
+                 <p>Sisa Saldo        : ${newBalance}</p>
+                 <p>-- Terimakasih -- </p>`
       };
 
       await transporter.sendMail(mailOptions);
