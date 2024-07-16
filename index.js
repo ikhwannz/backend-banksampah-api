@@ -904,11 +904,15 @@ app.get('/stoksampahkeluar', async (req, res) => {
 
 app.post('/tariksaldo', async (req, res) => {
   try {
-      const { name, amount } = req.body;
+      const { name, amount, note } = req.body;
 
       // Validasi input
       if (!name || amount == null || isNaN(amount) || amount <= 0) {
           return res.status(400).send("Nama nasabah dan jumlah penarikan yang valid wajib diisi.");
+      }
+
+      if (!note || typeof note !== 'string') {
+          return res.status(400).send("Catatan wajib diisi dengan format teks yang valid.");
       }
 
       // Ambil data nasabah dari koleksi 'saldo_nasabah'
@@ -939,6 +943,7 @@ app.post('/tariksaldo', async (req, res) => {
       const withdrawalRef = await db.collection('saldo_keluar').add({
           name: name,
           amount: amount,
+          note: note,
           date: currentDate
       });
 
@@ -976,6 +981,7 @@ app.post('/tariksaldo', async (req, res) => {
                  <p>Nama: ${name}</p>
                  <p>Tanggal: ${new Date().toISOString()}</p>
                  <p>Jumlah Penarikan: ${amount}</p>
+                 <p>Catatan: ${note}</p>
                  <p>Sisa Saldo: ${newBalance}</p>`
       };
 
