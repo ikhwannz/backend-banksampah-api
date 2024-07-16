@@ -819,7 +819,7 @@ app.post('/tabung', async (req, res) => {
           to: email,
           subject: 'Nota Menabung Sampah - WasteApp',
           html: `<h2 style="text-align:center">Menabung Sampah Berhasil</h2>
-                 <p>----------------------------------------------------------------------</p> 
+                 <p>--------------------------------------------------------------------------------------------------------------------------------</p> 
                  <p>Anda berhasil menabung sampah dengan rincian sebagai berikut.</p>
                  <table>
                  <tbody>
@@ -831,8 +831,8 @@ app.post('/tabung', async (req, res) => {
                  <tr><td>Catatan</td><td>:</td><td>${note}</td></tr>
                  </tbody>
                  </table>
-                 <p>-----------------------------------------------------------------------</p>
-                 <h4>Saldo Masuk   : ${totalBalance}</h4>
+                 <p>--------------------------------------------------------------------------------------------------------------------------------</p>
+                 <p>Saldo Masuk   : ${totalBalance}<p>
                  <p>-- Terimakasih sudah menabung di bank sampah WasteApp -- </p>`
       };
 
@@ -984,7 +984,7 @@ app.post('/tariksaldo', async (req, res) => {
           to: email,
           subject: 'Nota Penarikan Saldo - WasteApp',
           html: `<h1>Tarik Saldo Berhasil</h1>
-                 <p>---------------------------------------------------------------</p> 
+                 <p>--------------------------------------------------------------------------------------------------------------------------------</p>
                  <p>Anda telah berhasil Tarik Saldo dengan rincian sebagai berikut.</p>
                  <table>
                  <tbody>
@@ -994,9 +994,8 @@ app.post('/tariksaldo', async (req, res) => {
                  <tr><td>Catatan</td><td>:</td><td>${note}</td></tr>
                  </tbody>
                  </table>
-                 <p>---------------------------------------------------------------</p> 
-                 <h4>Sisa Saldo        : ${newBalance}</h4>
-                 
+                 <p>--------------------------------------------------------------------------------------------------------------------------------</p>
+                 <p>Sisa Saldo        : ${newBalance}<p>
                  <p>-- Terimakasih -- </p>`
       };
 
