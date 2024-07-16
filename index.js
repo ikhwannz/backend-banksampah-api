@@ -818,17 +818,19 @@ app.post('/tabung', async (req, res) => {
           from: process.env.EMAIL_SECRET_KEY,
           to: email,
           subject: 'Nota Menabung Sampah - WasteApp',
-          html: `<h3>Menabung Sampah Berhasil</h3>
-                 --------------------------------------- 
+          html: `<h2 style="text-align:center">Menabung Sampah Berhasil</h2>
+                 ---------------------------------------------------------------------- 
                  <p>Anda berhasil menabung sampah dengan rincian sebagai berikut.</p>
+                 <pre>
                  <p>Nama          : ${name}</p>
                  <p>Tanggal       : ${date}</p>
-                 <p>Jenis Sampah  : </p>
+                 <p>Deposits      : </p>
                  <ul>
                    ${Object.keys(wasteAmounts).map(wasteTypeId => `<li>Jenis Sampah: ${wasteNames[wasteTypeId]}, Jumlah: ${wasteAmounts[wasteTypeId]} kg</li>`).join('')}
                  </ul>
-                 ---------------------------------------
+                 -----------------------------------------------------------------------
                  <p>Saldo Masuk   : ${totalBalance}</p>
+                 </pre>
                  <p>-- Terimakasih sudah menabung di bank sampah WasteApp -- </p>`
       };
 
@@ -982,12 +984,14 @@ app.post('/tariksaldo', async (req, res) => {
           html: `<h3>Tarik Saldo Berhasil</h3>
                  <p>------------------------------------</p> 
                  <p>Anda telah berhasil Tarik Saldo dengan rincian sebagai berikut.</p>
+                 <pre>
                  <p>Nama              : ${name}</p>
                  <p>Tanggal           : ${new Date().toISOString()}</p>
                  <p>Jumlah Penarikan  : ${amount}</p>
                  <p>Catatan           : ${note}</p>
                  <p>------------------------------------</p> 
                  <p>Sisa Saldo        : ${newBalance}</p>
+                 </pre>
                  <p>-- Terimakasih -- </p>`
       };
 
