@@ -425,10 +425,10 @@ app.get('/nasabah/search', async (req, res) => {
 app.put('/nasabah/:id', async (req, res) => {
   try {
     const customerId = req.params.id;
-    const { name, phoneNumber, address } = req.body;
+    const { name, phoneNumber, address, email } = req.body;
 
     // Validasi input dasar
-    if (!name && !phoneNumber && !address) {
+    if (!name && !phoneNumber && !address && !email) {
       return res.status(400).send("Setidaknya edit satu data nasabah.");
     }
 
@@ -445,11 +445,12 @@ app.put('/nasabah/:id', async (req, res) => {
     if (name) updateData.name = name;
     if (phoneNumber) updateData.phoneNumber = phoneNumber;
     if (address) updateData.address = address;
+    if (email) updateData.email = email;
 
     // Update data nasabah di Firestore
     await customerRef.update(updateData);
 
-    // Update nama dokumen di collection datasaving jika nama berubah
+    // Update nama dokumen di collection saldo_nasabah jika nama berubah
     if (name) {
       const oldName = customerDoc.data().name;
       const datasavingRef = db.collection('saldo_nasabah').doc(oldName);
