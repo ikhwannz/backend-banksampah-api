@@ -1078,6 +1078,53 @@ app.get('/tabung', async (req, res) => {
   }
 });
 
+app.get('/rekapantransaksi', async (req, res) => {
+  try {
+    const { period } = req.query;
+    const transactionsRef = db.collection('transaksi');
+    const snapshot = await transactionsRef.get();
+
+    if (snapshot.empty) {
+      return res.status(404).send("Tidak ditemukan data transaksi menabung.");
+    }
+
+    let startDate;
+    const today = moment().startOf('day');
+    const startOfWeek = moment().startOf('week');
+    const startOfMonth = moment().startOf('month');
+
+    if (period === 'today') {
+      startDate = today;
+    } else if (period === 'week') {
+      startDate = startOfWeek;
+    } else if (period === 'month') {
+      startDate = startOfMonth;
+    } else {
+      return res.status(400).send("Parameter periode tidak valid. Gunakan 'today', 'week', atau 'month'.");
+    }
+
+    let totalAmount = 0;
+
+    snapshot.forEach(doc => {
+      const transactionData = doc.data();
+      const transactionDate = moment(transactionData.date, 'DD/MM/YYYY');
+
+      if (transactionDate.isSameOrAfter(startDate)) {
+        totalAmount += transactionData.amount;
+      }
+    });
+
+    const response = {
+      period,
+      totalAmount,
+    };
+
+    res.status(200).send(response);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});
+
 // Mendapatkan detail data dari riwayat tabung
 app.get('/tabung/:id', async (req, res) => {
   try {
