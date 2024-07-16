@@ -323,6 +323,23 @@ app.get('/nasabah', async (req, res) => {
     }
 });
 
+app.get('/jumlahnasabah', async (req, res) => {
+  try {
+      const customersRef = db.collection('nasabah');
+      const snapshot = await customersRef.get();
+
+      if (snapshot.empty) {
+          return res.status(404).send("Tidak ditemukan data nasabah.");
+      }
+
+      const jumlahNasabah = snapshot.size; // Menghitung jumlah dokumen
+
+      res.status(200).send({ jumlahNasabah });
+  } catch (error) {
+      res.status(500).send(error.message);
+  }
+});
+
 // Mendapatkan detail data nasabah
 app.get('/nasabah/:id', async (req, res) => {
   try {
@@ -971,7 +988,6 @@ app.post('/tariksaldo', async (req, res) => {
   }
 });
 
-
 app.get('/saldokeluar', async (req, res) => {
   try {
       // Ambil semua data dari koleksi 'saldo_keluar'
@@ -1011,6 +1027,29 @@ app.get('/saldo', async (req, res) => {
     res.status(200).send(saldo);
   } catch (error) {
     res.status(500).send(error.message);
+  }
+});
+
+app.get('/totalsaldo', async (req, res) => {
+  try {
+      const saldoRef = db.collection('saldo_nasabah');
+      const snapshot = await saldoRef.get();
+
+      if (snapshot.empty) {
+          return res.status(404).send("Tidak ditemukan data saldo nasabah.");
+      }
+
+      let totalSaldo = 0;
+      snapshot.forEach(doc => {
+          const customerData = doc.data();
+          if (customerData.balance && !isNaN(customerData.balance)) {
+              totalSaldo += customerData.balance;
+          }
+      });
+
+      res.status(200).send({ totalSaldo });
+  } catch (error) {
+      res.status(500).send(error.message);
   }
 });
 
