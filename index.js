@@ -624,11 +624,15 @@ app.delete('/wastetypes/:id', async (req, res) => {
 
 app.post('/jualsampah', async (req, res) => {
   try {
-      const { wasteTypeId, amount } = req.body;
+      const { wasteTypeId, amount, note } = req.body;
 
       // Validasi input
       if (!wasteTypeId || amount == null || isNaN(amount) || amount <= 0) {
           return res.status(400).send("Jenis sampah dan jumlah sampah yang valid wajib diisi.");
+      }
+
+      if (!note || typeof note !== 'string') {
+          return res.status(400).send("Catatan wajib diisi dengan format teks yang valid.");
       }
 
       // Ambil data jenis sampah dari koleksi 'jumlah_sampah'
@@ -659,6 +663,7 @@ app.post('/jualsampah', async (req, res) => {
       await db.collection('waste_reductions').add({
           wasteTypeId: wasteTypeId,
           amount: amount,
+          note: note,
           date: currentDate
       });
 
@@ -832,6 +837,29 @@ app.get('/stoksampah', async (req, res) => {
       });
 
       res.status(200).send(jumlahSampahData);
+  } catch (error) {
+      res.status(500).send(error.message);
+  }
+});
+
+app.get('/totalstoksampah', async (req, res) => {
+  try {
+      // Ambil semua data dari koleksi 'jumlah_sampah'
+      const jumlahSampahSnapshot = await db.collection('jumlah_sampah').get();
+      if (jumlahSampahSnapshot.empty) {
+          return res.status(404).send("Tidak ada data di koleksi jumlah_sampah.");
+      }
+
+      // Hitung total stok sampah
+      let totalStokSampah = 0;
+      jumlahSampahSnapshot.forEach(doc => {
+          const data = doc.data();
+          if (data.totalAmount && !isNaN(data.totalAmount)) {
+              totalStokSampah += data.totalAmount;
+          }
+      });
+
+      res.status(200).send({ totalStokSampah });
   } catch (error) {
       res.status(500).send(error.message);
   }
