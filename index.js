@@ -984,14 +984,17 @@ app.post('/tariksaldo', async (req, res) => {
           html: `<h3>Tarik Saldo Berhasil</h3>
                  <p>------------------------------------</p> 
                  <p>Anda telah berhasil Tarik Saldo dengan rincian sebagai berikut.</p>
-                 <pre>
-                 <p>Nama              : ${name}</p>
-                 <p>Tanggal           : ${new Date().toISOString()}</p>
-                 <p>Jumlah Penarikan  : ${amount}</p>
-                 <p>Catatan           : ${note}</p>
+                 <table>
+                 <tbody>
+                 <tr><td>Nama</td><td>:</td><td>${name}</td></tr>
+                 <tr><td>Tanggal</td><td>:</td><td>${new Date().toISOString()}</td></tr>
+                 <tr><td>Jumlah Penarikan</td><td>:</td><td>${amount}</td></tr>
+                 <tr><td>Catatan</td><td>:</td><td>${note}</td></tr>
+                 </tbody>
+                 </table>
                  <p>------------------------------------</p> 
                  <p>Sisa Saldo        : ${newBalance}</p>
-                 </pre>
+                 
                  <p>-- Terimakasih -- </p>`
       };
 
