@@ -818,7 +818,7 @@ app.post('/tabung', async (req, res) => {
           from: process.env.EMAIL_SECRET_KEY,
           to: email,
           subject: 'Nota Menabung Sampah - WasteApp',
-          html: `<h2 style="text-align:center">Menabung Sampah Berhasil</h2>
+          html: `<h2>Menabung Sampah Berhasil</h2>
                  <p>--------------------------------------------------------------------------------------------------------------------------------</p> 
                  <p>Anda berhasil menabung sampah dengan rincian sebagai berikut.</p>
                  <table>
@@ -831,7 +831,7 @@ app.post('/tabung', async (req, res) => {
                  </tbody>
                  </table>
                  <p>--------------------------------------------------------------------------------------------------------------------------------</p>
-                 <p>Saldo Masuk   : ${totalBalance}<p>
+                 <p><b>Saldo Masuk   : ${totalBalance}</b><p>
                  <p>-- Terimakasih sudah menabung di bank sampah WasteApp -- </p>`
       };
 
@@ -982,7 +982,7 @@ app.post('/tariksaldo', async (req, res) => {
           from: process.env.EMAIL_SECRET_KEY,
           to: email,
           subject: 'Nota Penarikan Saldo - WasteApp',
-          html: `<h1>Tarik Saldo Berhasil</h1>
+          html: `<h2>Tarik Saldo Berhasil</h2>
                  <p>--------------------------------------------------------------------------------------------------------------------------------</p>
                  <p>Anda telah berhasil Tarik Saldo dengan rincian sebagai berikut.</p>
                  <table>
@@ -994,7 +994,7 @@ app.post('/tariksaldo', async (req, res) => {
                  </tbody>
                  </table>
                  <p>--------------------------------------------------------------------------------------------------------------------------------</p>
-                 <p>Sisa Saldo        : ${newBalance}<p>
+                 <p><b>Sisa Saldo        : ${newBalance}</b><p>
                  <p>-- Terimakasih -- </p>`
       };
 
