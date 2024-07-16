@@ -978,7 +978,7 @@ app.post('/tariksaldo', async (req, res) => {
           from: process.env.EMAIL_SECRET_KEY,
           to: email,
           subject: 'Nota Penarikan Saldo Bank Sampah',
-          html: `<h3>Nota Penarikan Saldo</h3>
+          html: `<h3>Nota Tarik Saldo Nasabah</h3>
                  <p>Nama: ${name}</p>
                  <p>Tanggal: ${new Date().toISOString()}</p>
                  <p>Jumlah Penarikan: ${amount}</p>
