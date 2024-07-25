@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
 const moment = require('moment-timezone');
+const { Twilio } = require("twilio");
 
 const app = express();
 app.use(cors());
@@ -42,6 +43,10 @@ const verifyToken = (req, res, next) => {
     res.status(400).send("Invalid token.");
   }
 };
+
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const client = new Twilio(accountSid, authToken);
 
 // Define routes here
 //Registrasi Pengguna Baru
@@ -909,101 +914,90 @@ app.get('/stoksampahkeluar', async (req, res) => {
 
 app.post('/tariksaldo', async (req, res) => {
   try {
-      const { name, amount, note } = req.body;
+    const { name, amount, note } = req.body;
 
-      // Validasi input
-      if (!name || amount == null || isNaN(amount) || amount <= 0) {
-          return res.status(400).send("Nama nasabah dan jumlah penarikan yang valid wajib diisi.");
-      }
+    // Validasi input
+    if (!name || amount == null || isNaN(amount) || amount <= 0) {
+      return res.status(400).send("Nama nasabah dan jumlah penarikan yang valid wajib diisi.");
+    }
 
-      if (!note || typeof note !== 'string') {
-          return res.status(400).send("Catatan wajib diisi dengan format teks yang valid.");
-      }
+    if (!note || typeof note !== 'string') {
+      return res.status(400).send("Catatan wajib diisi dengan format teks yang valid.");
+    }
 
-      // Ambil data nasabah dari koleksi 'saldo_nasabah'
-      const customerRef = db.collection('saldo_nasabah').doc(name);
-      const customerDoc = await customerRef.get();
+    // Ambil data nasabah dari koleksi 'saldo_nasabah'
+    const customerRef = db.collection('saldo_nasabah').doc(name);
+    const customerDoc = await customerRef.get();
 
-      if (!customerDoc.exists) {
-          return res.status(404).send("Nasabah tidak ditemukan.");
-      }
+    if (!customerDoc.exists) {
+      return res.status(404).send("Nasabah tidak ditemukan.");
+    }
 
-      const customerData = customerDoc.data();
-      const currentBalance = customerData.totalBalance;
+    const customerData = customerDoc.data();
+    const currentBalance = customerData.totalBalance;
 
-      // Periksa apakah saldo cukup untuk penarikan
-      if (currentBalance < amount) {
-          return res.status(400).send("Saldo tidak mencukupi untuk penarikan.");
-      }
+    // Periksa apakah saldo cukup untuk penarikan
+    if (currentBalance < amount) {
+      return res.status(400).send("Saldo tidak mencukupi untuk penarikan.");
+    }
 
-      // Kurangi saldo nasabah
-      const newBalance = currentBalance - amount;
-      await customerRef.update({
-          totalBalance: newBalance
-      });
+    // Kurangi saldo nasabah
+    const newBalance = currentBalance - amount;
+    await customerRef.update({
+      totalBalance: newBalance
+    });
 
-      const currentDate = moment().tz('Asia/Jakarta').format();
+    const currentDate = moment().tz('Asia/Jakarta').format();
 
-      // Simpan data penarikan ke koleksi 'saldo_keluar'
-      const withdrawalRef = await db.collection('saldo_keluar').add({
-          name: name,
-          amount: amount,
-          note: note,
-          date: currentDate
-      });
+    // Simpan data penarikan ke koleksi 'saldo_keluar'
+    await db.collection('saldo_keluar').add({
+      name: name,
+      amount: amount,
+      note: note,
+      date: currentDate
+    });
 
-      // Ambil data nasabah untuk mendapatkan email
-      const nasabahRef = db.collection('nasabah').where('name', '==', name);
-      const nasabahSnapshot = await nasabahRef.get();
+    // Ambil data nasabah untuk mendapatkan nomor telepon
+    const nasabahRef = db.collection('nasabah').where('name', '==', name);
+    const nasabahSnapshot = await nasabahRef.get();
 
-      if (nasabahSnapshot.empty) {
-          return res.status(404).send("Nasabah tidak ditemukan.");
-      }
+    if (nasabahSnapshot.empty) {
+      return res.status(404).send("Nasabah tidak ditemukan.");
+    }
 
-      let email;
-      nasabahSnapshot.forEach(doc => {
-          email = doc.data().email;
-      });
+    let phoneNumber;
+    nasabahSnapshot.forEach(doc => {
+      phoneNumber = doc.data().phoneNumber; // Pastikan field untuk nomor telepon adalah 'phoneNumber'
+    });
 
-      if (!email) {
-          return res.status(400).send("Email nasabah tidak ditemukan.");
-      }
+    if (!phoneNumber) {
+      return res.status(400).send("Nomor telepon nasabah tidak ditemukan.");
+    }
 
-      // Mengirim email nota penarikan saldo
-      let transporter = nodemailer.createTransport({
-          service: 'hotmail',
-          auth: {
-              user: process.env.EMAIL_SECRET_KEY,
-              pass: process.env.PASS_SECRET_KEY
-          }
-      });
+    // Mengirim WhatsApp nota penarikan saldo
+    const message = `
+      Tarik Saldo Berhasil
+      ----------------------------------------------------------------
+      Anda telah berhasil Tarik Saldo dengan rincian sebagai berikut.
+      Nama: ${name}
+      Tanggal: ${new Date().toISOString()}
+      Jumlah Penarikan: ${amount}
+      Catatan: ${note}
+      ----------------------------------------------------------------
+      Sisa Saldo: ${newBalance}
+      -- Terimakasih --
+    `;
 
-      let mailOptions = {
-          from: process.env.EMAIL_SECRET_KEY,
-          to: email,
-          subject: 'Nota Penarikan Saldo - WasteApp',
-          html: `<h2>Tarik Saldo Berhasil</h2>
-                 <p>--------------------------------------------------------------------------------------------------------------------------------</p>
-                 <p>Anda telah berhasil Tarik Saldo dengan rincian sebagai berikut.</p>
-                 <table>
-                 <tbody>
-                 <tr><td>Nama</td><td>:</td><td>${name}</td></tr>
-                 <tr><td>Tanggal</td><td>:</td><td>${new Date().toISOString()}</td></tr>
-                 <tr><td>Jumlah Penarikan</td><td>:</td><td>${amount}</td></tr>
-                 <tr><td>Catatan</td><td>:</td><td>${note}</td></tr>
-                 </tbody>
-                 </table>
-                 <p>--------------------------------------------------------------------------------------------------------------------------------</p>
-                 <p><b>Sisa Saldo        : ${newBalance}</b><p>
-                 <p>-- Terimakasih -- </p>`
-      };
+    await client.messages.create({
+      from: 'whatsapp:' + process.env.TWILIO_WHATSAPP_SANDBOX_NUMBER,
+      to: 'whatsapp:' + phoneNumber,
+      body: message
+    });
 
-      await transporter.sendMail(mailOptions);
-
-      res.status(201).send({ message: "Penarikan saldo berhasil dan nota elektronik telah dikirimkan", newBalance: newBalance });
+    res.status(201).send({ message: "Penarikan saldo berhasil dan nota elektronik telah dikirimkan melalui WhatsApp", newBalance: newBalance });
 
   } catch (error) {
-      res.status(500).send(error.message);
+    res.status(500).send(error.message);
   }
 });
 
