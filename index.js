@@ -816,7 +816,7 @@ app.post('/tabung', async (req, res) => {
 Anda telah berhasil menabung sampah dengan rincian sebagai berikut:
 
 *Nama:* ${name}
-*Tanggal:* ${moment(date).tz('Asia/Jakarta').format('DD-MM-YYYY HH:mm:ss')}
+*Tanggal:* ${moment().tz('Asia/Jakarta').format('DD-MM-YYYY HH:mm:ss')}
 *Deposit:* 
 ${Object.keys(wasteAmounts).map(wasteTypeId => `- Jenis Sampah: ${wasteNames[wasteTypeId]}, Jumlah: ${wasteAmounts[wasteTypeId]} kg`).join('\n')}
 
