@@ -827,18 +827,11 @@ ${Object.keys(wasteAmounts).map(wasteTypeId => `- Jenis Sampah: ${wasteNames[was
 -- Terimakasih sudah menabung di bank sampah WasteApp --
 `;
 
-      // Delay sebelum mengirim pesan
-      setTimeout(() => {
-          client.messages.create({
-              from: 'whatsapp:' + process.env.TWILIO_WHATSAPP_SANDBOX_NUMBER,
-              to: 'whatsapp:' + phoneNumber,
-              body: message
-          }).then(() => {
-              console.log('WhatsApp message sent successfully.');
-          }).catch(error => {
-              console.error('Error sending WhatsApp message:', error);
-          });
-      }, 2000); // Menunggu 2 detik sebelum mengirim pesan
+      await client.messages.create({
+          from: 'whatsapp:' + process.env.TWILIO_WHATSAPP_SANDBOX_NUMBER,
+          to: 'whatsapp:' + phoneNumber,
+          body: message
+      });
 
       res.status(201).send({ message: "Berhasil menabung sampah dan nota elektronik telah dikirimkan melalui WhatsApp", transactionId: newTransactionRef.id });
 
