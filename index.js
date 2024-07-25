@@ -976,16 +976,20 @@ app.post('/tariksaldo', async (req, res) => {
 
     // Mengirim WhatsApp nota penarikan saldo
     const message = `
-      Tarik Saldo Berhasil
-      ----------------------------------------------------------------
-      Anda telah berhasil Tarik Saldo dengan rincian sebagai berikut.
-      Nama: ${name}
-      Tanggal: ${new Date().toISOString()}
-      Jumlah Penarikan: ${amount}
-      Catatan: ${note}
-      ----------------------------------------------------------------
-      Sisa Saldo: ${newBalance}
-      -- Terimakasih --
+    *Tarik Saldo Berhasil*
+    ------------------------------
+    Anda telah berhasil melakukan tarik saldo dengan rincian sebagai berikut:
+
+    *Nama:* ${name}
+    *Tanggal:* ${moment().tz('Asia/Jakarta').format('DD-MM-YYYY HH:mm:ss')}
+    *Jumlah Penarikan:* Rp${amount.toLocaleString('id-ID')}
+    *Catatan:* ${note}
+
+    ------------------------------
+    *Sisa Saldo:* Rp${newBalance.toLocaleString('id-ID')}
+    ------------------------------
+
+    -- Terimakasih --
     `;
 
     await client.messages.create({
