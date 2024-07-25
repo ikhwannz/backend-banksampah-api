@@ -697,7 +697,6 @@ app.post('/jualsampah', async (req, res) => {
   }
 });
 
-// Menabung sampah
 app.post('/tabung', async (req, res) => {
   try {
       const { name, date, deposits } = req.body;
@@ -707,7 +706,7 @@ app.post('/tabung', async (req, res) => {
           return res.status(400).send("Semua data wajib diisi.");
       }
 
-      // Ambil data nasabah untuk mendapatkan email
+      // Ambil data nasabah untuk mendapatkan nomor telepon
       const nasabahRef = db.collection('nasabah').where('name', '==', name);
       const nasabahSnapshot = await nasabahRef.get();
 
@@ -715,13 +714,13 @@ app.post('/tabung', async (req, res) => {
           return res.status(404).send("Nasabah tidak ditemukan.");
       }
 
-      let email;
+      let phoneNumber;
       nasabahSnapshot.forEach(doc => {
-          email = doc.data().email;
+          phoneNumber = doc.data().phoneNumber;
       });
 
-      if (!email) {
-          return res.status(400).send("Email nasabah tidak ditemukan.");
+      if (!phoneNumber) {
+          return res.status(400).send("Nomor telepon nasabah tidak ditemukan.");
       }
 
       // Membuat variabel untuk total saldo
@@ -810,44 +809,195 @@ app.post('/tabung', async (req, res) => {
           }
       }
 
-      // Mengirim email nota elektronik
-      let transporter = nodemailer.createTransport({
-          service: 'hotmail',
-          auth: {
-              user: process.env.EMAIL_SECRET_KEY,
-              pass: process.env.PASS_SECRET_KEY
-          }
-      });
+      // Mengirim WhatsApp nota elektronik
+      const message = `
+*Menabung Sampah Berhasil*
+------------------------------
+Anda telah berhasil menabung sampah dengan rincian sebagai berikut:
 
-      let mailOptions = {
-          from: process.env.EMAIL_SECRET_KEY,
-          to: email,
-          subject: 'Nota Menabung Sampah - WasteApp',
-          html: `<h2>Menabung Sampah Berhasil</h2>
-                 <p>--------------------------------------------------------------------------------------------------------------------------------</p> 
-                 <p>Anda berhasil menabung sampah dengan rincian sebagai berikut.</p>
-                 <table>
-                 <tbody>
-                 <tr><td>Nama</td><td>:</td><td>${name}</td></tr>
-                 <tr><td>Tanggal</td><td>:</td><td>${date}</td></tr>
-                 <tr><td>Deposit</td><td>:</td><td><ul>
-                   ${Object.keys(wasteAmounts).map(wasteTypeId => `<li>Jenis Sampah: ${wasteNames[wasteTypeId]}, Jumlah: ${wasteAmounts[wasteTypeId]} kg</li>`).join('')}
-                 </ul></td></tr>
-                 </tbody>
-                 </table>
-                 <p>--------------------------------------------------------------------------------------------------------------------------------</p>
-                 <p><b>Saldo Masuk   : ${totalBalance}</b><p>
-                 <p>-- Terimakasih sudah menabung di bank sampah WasteApp -- </p>`
-      };
+*Nama:* ${name}
+*Tanggal:* ${moment(date).tz('Asia/Jakarta').format('DD-MM-YYYY HH:mm:ss')}
+*Deposit:* 
+${Object.keys(wasteAmounts).map(wasteTypeId => `- Jenis Sampah: ${wasteNames[wasteTypeId]}, Jumlah: ${wasteAmounts[wasteTypeId]} kg`).join('\n')}
 
-      await transporter.sendMail(mailOptions);
+------------------------------
+*Saldo Masuk:* Rp${totalBalance.toLocaleString('id-ID')}
+------------------------------
 
-      res.status(201).send({ message: "Berhasil menabung sampah dan nota elektronik telah dikirimkan", transactionId: newTransactionRef.id });
+-- Terimakasih sudah menabung di bank sampah WasteApp --
+`;
+
+      // Delay sebelum mengirim pesan
+      setTimeout(() => {
+          client.messages.create({
+              from: 'whatsapp:' + process.env.TWILIO_WHATSAPP_SANDBOX_NUMBER,
+              to: 'whatsapp:' + phoneNumber,
+              body: message
+          }).then(() => {
+              console.log('WhatsApp message sent successfully.');
+          }).catch(error => {
+              console.error('Error sending WhatsApp message:', error);
+          });
+      }, 2000); // Menunggu 2 detik sebelum mengirim pesan
+
+      res.status(201).send({ message: "Berhasil menabung sampah dan nota elektronik telah dikirimkan melalui WhatsApp", transactionId: newTransactionRef.id });
 
   } catch (error) {
       res.status(500).send(error.message);
   }
 });
+
+// Menabung sampah via email
+// app.post('/tabung', async (req, res) => {
+//   try {
+//       const { name, date, deposits } = req.body;
+
+//       // Validasi input dasar
+//       if (!name || !date || !deposits || !Array.isArray(deposits) || deposits.length === 0) {
+//           return res.status(400).send("Semua data wajib diisi.");
+//       }
+
+//       // Ambil data nasabah untuk mendapatkan email
+//       const nasabahRef = db.collection('nasabah').where('name', '==', name);
+//       const nasabahSnapshot = await nasabahRef.get();
+
+//       if (nasabahSnapshot.empty) {
+//           return res.status(404).send("Nasabah tidak ditemukan.");
+//       }
+
+//       let email;
+//       nasabahSnapshot.forEach(doc => {
+//           email = doc.data().email;
+//       });
+
+//       if (!email) {
+//           return res.status(400).send("Email nasabah tidak ditemukan.");
+//       }
+
+//       // Membuat variabel untuk total saldo
+//       let totalBalance = 0;
+
+//       // Membuat objek untuk menyimpan jumlah sampah berdasarkan jenis dan nama jenis sampah
+//       let wasteAmounts = {};
+//       let wasteNames = {};
+
+//       // Iterasi melalui setiap entri deposit
+//       for (const tabung of deposits) {
+//           const { wasteTypeId, amount } = tabung;
+
+//           // Validasi input untuk setiap entri deposit
+//           if (!wasteTypeId || amount == null || isNaN(amount) || amount <= 0) {
+//               return res.status(400).send("Setidaknya masukkan 1 jenis sampah dengan jumlah yang valid.");
+//           }
+
+//           // Dapatkan harga per 100 gram dan nama dari jenis sampah yang sesuai
+//           const wasteTypeDoc = await db.collection('jenis_sampah').doc(wasteTypeId).get();
+//           if (!wasteTypeDoc.exists) {
+//               return res.status(404).send(`Jenis sampah ${wasteTypeId} tidak ada.`);
+//           }
+
+//           const wasteTypeData = wasteTypeDoc.data();
+//           const pricePer100Gram = wasteTypeData.pricePer100Gram;
+//           const wasteTypeName = wasteTypeData.name;
+
+//           // Konversi jumlah dari kg ke 100 gram dan hitung total saldo untuk jenis sampah ini
+//           const amountInHundredGrams = (amount * 1000) / 100;
+//           totalBalance += pricePer100Gram * amountInHundredGrams;
+
+//           // Tambahkan jumlah ke wasteAmounts dan nama jenis sampah ke wasteNames
+//           if (wasteAmounts[wasteTypeId]) {
+//               wasteAmounts[wasteTypeId] += amount;
+//           } else {
+//               wasteAmounts[wasteTypeId] = amount;
+//               wasteNames[wasteTypeId] = wasteTypeName;
+//           }
+//       }
+
+//       // Simpan data transaksi ke koleksi 'transaksi' di Firestore
+//       const newTransactionRef = await db.collection('transaksi').add({
+//           name: name,
+//           date: date,
+//           deposits: deposits,
+//           totalBalance: totalBalance
+//       });
+
+//       // Update atau tambahkan data nasabah ke koleksi 'saldo_nasabah' di Firestore
+//       const customerRef = db.collection('saldo_nasabah').doc(name);
+//       const customerDoc = await customerRef.get();
+
+//       if (customerDoc.exists) {
+//           // Jika nasabah sudah ada, update total saldo
+//           const existingBalance = customerDoc.data().totalBalance || 0;
+//           await customerRef.update({
+//               totalBalance: existingBalance + totalBalance
+//           });
+//       } else {
+//           // Jika nasabah belum ada, tambahkan data nasabah baru
+//           await customerRef.set({
+//               name: name,
+//               totalBalance: totalBalance
+//           });
+//       }
+
+//       // Update jumlah sampah berdasarkan jenis di koleksi 'jumlah_sampah'
+//       for (const wasteTypeId in wasteAmounts) {
+//           const wasteAmount = wasteAmounts[wasteTypeId];
+//           const wasteAmountRef = db.collection('jumlah_sampah').doc(wasteTypeId);
+//           const wasteAmountDoc = await wasteAmountRef.get();
+
+//           if (wasteAmountDoc.exists) {
+//               // Jika data jenis sampah sudah ada, update jumlahnya
+//               const existingAmount = wasteAmountDoc.data().totalAmount || 0;
+//               await wasteAmountRef.update({
+//                   totalAmount: existingAmount + wasteAmount
+//               });
+//           } else {
+//               // Jika data jenis sampah belum ada, tambahkan data baru
+//               await wasteAmountRef.set({
+//                   wasteTypeId: wasteTypeId,
+//                   totalAmount: wasteAmount
+//               });
+//           }
+//       }
+
+//       // Mengirim email nota elektronik
+//       let transporter = nodemailer.createTransport({
+//           service: 'hotmail',
+//           auth: {
+//               user: process.env.EMAIL_SECRET_KEY,
+//               pass: process.env.PASS_SECRET_KEY
+//           }
+//       });
+
+//       let mailOptions = {
+//           from: process.env.EMAIL_SECRET_KEY,
+//           to: email,
+//           subject: 'Nota Menabung Sampah - WasteApp',
+//           html: `<h2>Menabung Sampah Berhasil</h2>
+//                  <p>--------------------------------------------------------------------------------------------------------------------------------</p> 
+//                  <p>Anda berhasil menabung sampah dengan rincian sebagai berikut.</p>
+//                  <table>
+//                  <tbody>
+//                  <tr><td>Nama</td><td>:</td><td>${name}</td></tr>
+//                  <tr><td>Tanggal</td><td>:</td><td>${date}</td></tr>
+//                  <tr><td>Deposit</td><td>:</td><td><ul>
+//                    ${Object.keys(wasteAmounts).map(wasteTypeId => `<li>Jenis Sampah: ${wasteNames[wasteTypeId]}, Jumlah: ${wasteAmounts[wasteTypeId]} kg</li>`).join('')}
+//                  </ul></td></tr>
+//                  </tbody>
+//                  </table>
+//                  <p>--------------------------------------------------------------------------------------------------------------------------------</p>
+//                  <p><b>Saldo Masuk   : ${totalBalance}</b><p>
+//                  <p>-- Terimakasih sudah menabung di bank sampah WasteApp -- </p>`
+//       };
+
+//       await transporter.sendMail(mailOptions);
+
+//       res.status(201).send({ message: "Berhasil menabung sampah dan nota elektronik telah dikirimkan", transactionId: newTransactionRef.id });
+
+//   } catch (error) {
+//       res.status(500).send(error.message);
+//   }
+// });
 
 app.get('/stoksampah', async (req, res) => {
   try {
@@ -1004,6 +1154,107 @@ app.post('/tariksaldo', async (req, res) => {
     res.status(500).send(error.message);
   }
 });
+
+//TARIK SALDO VIA EMAIL
+// app.post('/tariksaldo', async (req, res) => {
+//   try {
+//       const { name, amount, note } = req.body;
+
+//       // Validasi input
+//       if (!name || amount == null || isNaN(amount) || amount <= 0) {
+//           return res.status(400).send("Nama nasabah dan jumlah penarikan yang valid wajib diisi.");
+//       }
+
+//       if (!note || typeof note !== 'string') {
+//           return res.status(400).send("Catatan wajib diisi dengan format teks yang valid.");
+//       }
+
+//       // Ambil data nasabah dari koleksi 'saldo_nasabah'
+//       const customerRef = db.collection('saldo_nasabah').doc(name);
+//       const customerDoc = await customerRef.get();
+
+//       if (!customerDoc.exists) {
+//           return res.status(404).send("Nasabah tidak ditemukan.");
+//       }
+
+//       const customerData = customerDoc.data();
+//       const currentBalance = customerData.totalBalance;
+
+//       // Periksa apakah saldo cukup untuk penarikan
+//       if (currentBalance < amount) {
+//           return res.status(400).send("Saldo tidak mencukupi untuk penarikan.");
+//       }
+
+//       // Kurangi saldo nasabah
+//       const newBalance = currentBalance - amount;
+//       await customerRef.update({
+//           totalBalance: newBalance
+//       });
+
+//       const currentDate = moment().tz('Asia/Jakarta').format();
+
+//       // Simpan data penarikan ke koleksi 'saldo_keluar'
+//       const withdrawalRef = await db.collection('saldo_keluar').add({
+//           name: name,
+//           amount: amount,
+//           note: note,
+//           date: currentDate
+//       });
+
+//       // Ambil data nasabah untuk mendapatkan email
+//       const nasabahRef = db.collection('nasabah').where('name', '==', name);
+//       const nasabahSnapshot = await nasabahRef.get();
+
+//       if (nasabahSnapshot.empty) {
+//           return res.status(404).send("Nasabah tidak ditemukan.");
+//       }
+
+//       let email;
+//       nasabahSnapshot.forEach(doc => {
+//           email = doc.data().email;
+//       });
+
+//       if (!email) {
+//           return res.status(400).send("Email nasabah tidak ditemukan.");
+//       }
+
+//       // Mengirim email nota penarikan saldo
+//       let transporter = nodemailer.createTransport({
+//           service: 'hotmail',
+//           auth: {
+//               user: process.env.EMAIL_SECRET_KEY,
+//               pass: process.env.PASS_SECRET_KEY
+//           }
+//       });
+
+//       let mailOptions = {
+//           from: process.env.EMAIL_SECRET_KEY,
+//           to: email,
+//           subject: 'Nota Penarikan Saldo - WasteApp',
+//           html: <h2>Tarik Saldo Berhasil</h2>
+//                  <p>--------------------------------------------------------------------------------------------------------------------------------</p>
+//                  <p>Anda telah berhasil Tarik Saldo dengan rincian sebagai berikut.</p>
+//                  <table>
+//                  <tbody>
+//                  <tr><td>Nama</td><td>:</td><td>${name}</td></tr>
+//                  <tr><td>Tanggal</td><td>:</td><td>${new Date().toISOString()}</td></tr>
+//                  <tr><td>Jumlah Penarikan</td><td>:</td><td>${amount}</td></tr>
+//                  <tr><td>Catatan</td><td>:</td><td>${note}</td></tr>
+//                  </tbody>
+//                  </table>
+//                  <p>--------------------------------------------------------------------------------------------------------------------------------</p>
+//                  <p><b>Sisa Saldo        : ${newBalance}</b><p>
+//                  <p>-- Terimakasih -- </p>
+//       };
+
+//       await transporter.sendMail(mailOptions);
+
+//       res.status(201).send({ message: "Penarikan saldo berhasil dan nota elektronik telah dikirimkan", newBalance: newBalance });
+
+//   } catch (error) {
+//       res.status(500).send(error.message);
+//   }
+// });
 
 app.get('/saldokeluar', async (req, res) => {
   try {
