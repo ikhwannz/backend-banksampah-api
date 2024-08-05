@@ -48,7 +48,7 @@ const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const client = new Twilio(accountSid, authToken);
 
-// Define routes here
+//ROUTE
 //Registrasi Pengguna Baru
 app.post('/auth/register', async (req, res) => {
   try {
@@ -130,11 +130,11 @@ app.post('/auth/login', async (req, res) => {
       return res.status(401).send("Password yang anda masukkan salah.");
     }
 
-    // Generate JWT and Refresh Token
+    // Generate Access Token dan Refresh Token
     const accessToken = generateAccessToken(userId);
     const refreshToken = generateRefreshToken(userId);
 
-    // Simpan refresh token ke database atau storage
+    // Simpan refresh token ke database
     await db.collection('refresh_tokens').doc(userId).set({ refreshToken });
 
     res.status(200).send({
@@ -149,12 +149,12 @@ app.post('/auth/login', async (req, res) => {
   }
 });
 
-// Endpoint logout
+// logout
 app.post('/auth/logout', verifyToken, async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // Hapus refresh token dari database atau storage
+    // Hapus refresh token dari database
     await db.collection('refresh_tokens').doc(userId).delete();
 
     res.status(200).send({
@@ -192,12 +192,12 @@ app.post('/auth/token', async (req, res) => {
   }
 });
 
-// Mengedit profil user
+// Edit profil user account
 app.put('/users/me', verifyToken, async (req, res) => {
   try {
     const userId = req.user.id;
     const { email, username } = req.body;
-
+    
     if (!email && !username) {
       return res.status(400).send("Setidaknya edit satu data.");
     }
@@ -221,7 +221,7 @@ app.put('/users/me', verifyToken, async (req, res) => {
   }
 });
 
-// Mengubah password user
+// Ubah password user account
 app.put('/users/me/password', verifyToken, async (req, res) => {
   try {
     const userId = req.user.id;
@@ -263,6 +263,7 @@ app.put('/users/me/password', verifyToken, async (req, res) => {
   }
 });
 
+// Registrasi Nasabah
 app.post('/nasabah', async (req, res) => {
   try {
     const { name, phoneNumber, address, email } = req.body;
@@ -305,7 +306,7 @@ app.post('/nasabah', async (req, res) => {
   }
 });
 
-//Mendapatkan seluruh data nasabah
+// Mendapatkan seluruh data nasabah
 app.get('/nasabah', async (req, res) => {
     try {
       const customersRef = db.collection('nasabah');
@@ -328,6 +329,7 @@ app.get('/nasabah', async (req, res) => {
     }
 });
 
+// Mendapatkan jumlah nasabah
 app.get('/jumlahnasabah', async (req, res) => {
   try {
       const customersRef = db.collection('nasabah');
@@ -388,7 +390,7 @@ app.get('/nasabah/names', async (req, res) => {
   }
 });
 
-// Endpoint untuk Mencari Nasabah Berdasarkan Nama
+// Mencari Nasabah Berdasarkan Nama
 app.get('/nasabah/search', async (req, res) => {
   try {
     const { name } = req.query;
@@ -563,7 +565,7 @@ app.get('/wastetypes', async (req, res) => {
   }
 });
 
-// Endpoint untuk Mencari Jenis Sampah Berdasarkan Nama
+// Mencari Jenis Sampah Berdasarkan Nama
 app.get('/wastetypes/search', async (req, res) => {
   try {
     const { name } = req.query;
@@ -645,6 +647,7 @@ app.delete('/wastetypes/:id', async (req, res) => {
   }
 });
 
+// Jual/setor stok sampah
 app.post('/jualsampah', async (req, res) => {
   try {
       const { wasteTypeId, amount, note } = req.body;
@@ -697,6 +700,7 @@ app.post('/jualsampah', async (req, res) => {
   }
 });
 
+// Menabung sampah
 app.post('/tabung', async (req, res) => {
   try {
       const { name, date, deposits } = req.body;
@@ -992,6 +996,7 @@ ${Object.keys(wasteAmounts).map(wasteTypeId => `- Jenis Sampah: ${wasteNames[was
 //   }
 // });
 
+// Menampilkan jumlah stok sampah
 app.get('/stoksampah', async (req, res) => {
   try {
       // Ambil semua data dari koleksi 'jumlah_sampah'
@@ -1012,6 +1017,7 @@ app.get('/stoksampah', async (req, res) => {
   }
 });
 
+// Menampilkan jumlah stok sampah total
 app.get('/totalstoksampah', async (req, res) => {
   try {
       // Ambil semua data dari koleksi 'jumlah_sampah'
@@ -1035,6 +1041,7 @@ app.get('/totalstoksampah', async (req, res) => {
   }
 });
 
+// Menampilkan data stok sampah keluar
 app.get('/stoksampahkeluar', async (req, res) => {
   try {
       // Ambil semua data dari koleksi 'waste_reductions'
@@ -1055,6 +1062,7 @@ app.get('/stoksampahkeluar', async (req, res) => {
   }
 });
 
+// Penarikan saldo nasabah
 app.post('/tariksaldo', async (req, res) => {
   try {
     const { name, amount, note } = req.body;
@@ -1249,6 +1257,7 @@ app.post('/tariksaldo', async (req, res) => {
 //   }
 // });
 
+// Menampilkan data saldo keluar
 app.get('/saldokeluar', async (req, res) => {
   try {
       // Ambil semua data dari koleksi 'saldo_keluar'
@@ -1269,6 +1278,7 @@ app.get('/saldokeluar', async (req, res) => {
   }
 });
 
+// Menampilkan data saldo nasabah
 app.get('/saldo', async (req, res) => {
   try {
     const saldoRef = db.collection('saldo_nasabah');
@@ -1291,6 +1301,7 @@ app.get('/saldo', async (req, res) => {
   }
 });
 
+// Menampilkan saldo total tersimpan
 app.get('/totalsaldo', async (req, res) => {
   try {
       const saldoRef = db.collection('saldo_nasabah');
@@ -1338,53 +1349,6 @@ app.get('/tabung', async (req, res) => {
     res.status(500).send(error.message);
   }
 });
-
-// app.get('/rekapantransaksi', async (req, res) => {
-//   try {
-//     const { period } = req.query;
-//     const transactionsRef = db.collection('transaksi');
-//     const snapshot = await transactionsRef.get();
-
-//     if (snapshot.empty) {
-//       return res.status(404).send("Tidak ditemukan data transaksi menabung.");
-//     }
-
-//     let startDate;
-//     const today = moment().startOf('day');
-//     const startOfWeek = moment().startOf('week');
-//     const startOfMonth = moment().startOf('month');
-
-//     if (period === 'today') {
-//       startDate = today;
-//     } else if (period === 'week') {
-//       startDate = startOfWeek;
-//     } else if (period === 'month') {
-//       startDate = startOfMonth;
-//     } else {
-//       return res.status(400).send("Parameter periode tidak valid. Gunakan 'today', 'week', atau 'month'.");
-//     }
-
-//     let totalAmount = 0;
-
-//     snapshot.forEach(doc => {
-//       const transactionData = doc.data();
-//       const transactionDate = moment(transactionData.date, 'DD/MM/YYYY');
-
-//       if (transactionDate.isSameOrAfter(startDate)) {
-//         totalAmount += transactionData.amount;
-//       }
-//     });
-
-//     const response = {
-//       period,
-//       totalAmount,
-//     };
-
-//     res.status(200).send(response);
-//   } catch (error) {
-//     res.status(500).send(error.message);
-//   }
-// });
 
 // Mendapatkan detail data dari riwayat tabung
 app.get('/tabung/:id', async (req, res) => {
