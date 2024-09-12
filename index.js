@@ -13,6 +13,7 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
+// Inisialisasi database Firestore Database
 const serviceAccount = JSON.parse(process.env.FIREBASE_ADMIN_CONFIG);
 
 admin.initializeApp({
